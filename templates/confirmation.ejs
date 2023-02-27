@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirmation</title>
+  <style type="text/css">
+    /* CLIENT-SPECIFIC STYLES ------------------- */
+
+    #outlook a {
+      padding: 0;
+      /* Force outlook to provide a 'view in browser' message */
+    }
+
+    .ReadMsgBody {
+      width: 100%;
+      /* Force Hotmail to emails at full width */
+    }
+
+    .ExternalClass {
+      width: 100%;
+      /* Force Hotmail to display emails at full width */
+    }
+
+    .ExternalClass,
+    .ExternalClass p,
+    .ExternalClass span,
+    .ExternalClass font,
+    .ExternalClass td,
+    ExternalClass div {
+      line-height: 100%;
+      /* Force Hotmail to display normal line spacing */
+    }
+
+    body,
+    table,
+    td,
+    a {
+      /* Prevent Webkit and Windows mobile changing default text sizes */
+      -webkit-text-sive-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+      font-family: 'Noto Sans JP', sans-serif;
+      text-decoration: none;
+    }
+
+    img {
+      /* Allow smoother rendering of resized image in Internet Explorer */
+      -ms-interpolation-mode: bicubic;
+    }
+
+    /* RESET STYLES --------------------------- */
+    body {
+      height: 100% !important;
+      margin: 0;
+      padding: 0;
+      width: 100% !important;
+    }
+
+    img {
+      border: 0;
+      height: auto;
+      line-height: 100%;
+      outline: none;
+      text-decoration: none;
+    }
+
+    table {
+      border-collapse: collapse !important;
+    }
+
+    /* ios blue links */
+    .apple-link a {
+      color: #999999;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100;300;400;500;700;900&display=swap"
+  rel="stylesheet">
+
+<body style='margin:0;padding:0;'>
+  <table border='0' cellpadding='0' cellspacing='0' width='100%' style='table-layout: fixed;'>
+    <div style="width:1px;font-size:1px;opacity: 0;height:1px;overflow: hidden;">
+      Thank You <%= name %>,
+        This is your Blood Drive Appointment Confirmation.
+        Time: <%= time %>, Date: <%= date.toDateString() %>
+    </div>
+    <tr>
+      <td>
+        <!-- WRAPPER TABLE -->
+        <table border='0' cellpadding='0' cellspacing='0' width='600'>
+          <!-- LOGO/PREHEADER TEXT -->
+          <tr>
+            <td
+              style="padding:20px 0 20px 0;font-size:24px;font-weight:700;line-height:28px;background-color:#790c5a;font-family:'Noto Sans JP', sans-serif;"
+              bgcolor="#790c5a">
+              <table border='0' cellpadding='0' cellspacing='0' width='100%'>
+                <tr>
+                  <td align="left"
+                    style="padding:10px 4px 10px 20px;font-size:24px;font-weight:700;line-height:28px;color:#f1d4d4;font-family:'Noto Sans JP', sans-serif;">
+                    Ahavas Chesed
+                  </td>
+                  <td align="right"
+                    style="padding:10px 20px 10px 4px;font-size:24px;font-weight:700;line-height:28px;color:#f1d4d4;font-family:'Noto Sans JP', sans-serif;">
+                    Blood Drive
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+  <table border='0' cellpadding='0' cellspacing='0' width='100%' style='table-layout: fixed;'>
+    <tr>
+      <td>
+        <!-- WRAPPER TABLE -->
+        <table border='0' cellpadding='0' cellspacing='0' width='600'>
+          <!-- LOGO/PREHEADER TEXT -->
+          <tr>
+            <td>
+              <table border='0' cellpadding='0' cellspacing='0' width='100%'>
+                <tr>
+                  <td align="left"
+                    style="padding:10px 0 0 5px;font-size: 24px;font-weight: 600;color:#06191d;font-family:'Noto Sans JP', sans-serif;">
+                    Thank You <%= name %>,
+                  </td>
+                </tr>
+                <tr>
+                  <td align="left"
+                    style="padding: 0 0 0 5px;font-size: 18px;font-weight: 700;color:#06191d;font-family:'Noto Sans JP', sans-serif;">
+                    Your Blood Donation Appointment Details
+                  </td>
+                </tr>
+                <tr>
+                  <td align="left"
+                    style="padding: 0 0 0 5px;font-size: 16px;font-weight: 600;color:#06191d;font-family:'Noto Sans JP', sans-serif;">
+                    When: <%= formattedDate %> at <%= time %>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="left"
+                    style="padding: 0 0 0 5px;font-size: 16px;font-weight: 600;color:#06191d;font-family:'Noto Sans JP', sans-serif;">
+                    Where: <%= location %>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="left"
+                    style="padding: 15px 0 0 5px;margin:15px 0 0 0;font-size: 16px;font-weight: 600;color:#06191d;font-family:'Noto Sans JP', sans-serif;">
+                    To reschedule or to cancel click the following link
+                  </td>
+                </tr>
+                <tr>
+                  <td align="left"
+                    style="padding: 15px 0 0 5px;margin:15px 0 0 0;font-size: 16px;font-weight: 600;color:#06191d;font-family:'Noto Sans JP', sans-serif;">
+                    <a style='padding:8px 16px 8px 16px;background:#790c5a;color:#f1d4d4;border-radius:6px'
+                      href="<%= website %>/reschedule/<%= id %>">reschedule</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+  <table border='0' cellpadding='0' cellspacing='0' width='100%' style='table-layout: fixed;'>
+    <tr>
+      <td style="padding:20px 0 20px 0">
+        <!-- WRAPPER TABLE -->
+        <table border='0' cellpadding='0' cellspacing='0' width='600'>
+          <!-- LOGO/PREHEADER TEXT -->
+          <tr>
+            <td>
+              <table border='0' cellpadding='0' cellspacing='0' width='100%'>
+                <tr>
+                  <td align="center">
+                    <img src="https://media1.giphy.com/media/Xfnpzut3hM1Uqb7J6z/giphy.gif" alt="Blood Donation Gif">
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+  <table border='0' cellpadding='0' cellspacing='0' width='100%' style='table-layout: fixed;'>
+    <tr>
+      <td style="padding: 10px 0 5px 0;font-size: 14px;font-weight: 400;line-height: 18px;">
+        <!-- WRAPPER TABLE -->
+        <table border='0' cellpadding='0' cellspacing='0' width='600'>
+          <!-- LOGO/PREHEADER TEXT -->
+          <tr>
+            <td>
+              <table border='0' cellpadding='0' cellspacing='0' width='100%'>
+                <tr>
+                  <td align="center">
+                    <table border='0' cellpadding='0' cellspacing='0' width='100%'>
+                      <tr>
+                        <td align="center">
+                          Our Mailing Address
+                        </td>
+                      </tr>
+                      <tr>
+                        <td align="center">
+                          Ahavas Chesed
+                        </td>
+                      </tr>
+                      <tr>
+                        <td align="center">
+                          720 Lefferts Avenue
+                        </td>
+                      </tr>
+                      <tr>
+                        <td align="center">
+                          Brooklyn, NY 11203
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+  <table border='0' cellpadding='0' cellspacing='0' width='100%' style='table-layout: fixed;'>
+    <tr>
+      <td style="padding: 40px 0 0 0;">
+        <!-- WRAPPER TABLE -->
+        <table border='0' cellpadding='0' cellspacing='0' width='600'>
+          <!-- LOGO/PREHEADER TEXT -->
+          <tr>
+            <td style="padding:10px 0 10px 0;background-color: #790c5a;" bgcolor="#790c5a">
+              <table border='0' cellpadding='0' cellspacing='0' width='100%'>
+                <tr>
+                  <td align="center"
+                    style="padding:20px 0 0 0;color:#f1d4d4;font-style: italic; font-size: 18px;line-height:20px;font-weight: 700;font-family:'Noto Sans JP', sans-serif;">
+                    "whoever saves a life, it is considered as if he saved an entire world"
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center"
+                    style="padding:8px 0 10px 0;color:#f1d4d49a;font-style: italic; font-size: 14px;font-weight: 500;line-height:18px;font-family:'Noto Sans JP', sans-serif;">
+                    - Jerusalem Talmud, Sanhedrin 4:1 (22a)
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+
+</html>
