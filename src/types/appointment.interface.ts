@@ -7,7 +7,7 @@ export interface IAppointmentService {
   CreateUserAppointment: (appointment: CreateAppointmentDTO) => Promise<IAppointment>;
   GetAllAvailableAppointments(): Promise<AvailableAppointments>;
   GetAllFilledAppointments: () => Promise<IAppointment[]>;
-  GetAppointmentById: (id: string) => Promise<IAppointment | null>;
+  GetAppointmentById: (id: string) => Promise<IAppointment>;
   CancelAppointment: (id: string) => Promise<boolean>;
-  UpdateAppointmentTime: (id: string, updatedAppointmentTime: TIME_SLOT) => Promise<IAppointment | null>;
+  UpdateAppointmentTime: (id: string, updatedAppointmentTime: TIME_SLOT) => Promise<IAppointment>;
 }

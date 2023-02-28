@@ -2,7 +2,7 @@ export { Validator } from './validator.interface';
 export { IAppointmentService } from './appointment.interface';
 export { ITemplateService } from './template.interface';
 export { ITransportConfig, MailMessageInfo, IMessageResult, IMailer } from './mailer.interface';
-
+export { InvalidField } from './response';
 export type slot_number = 1 | 2 | 3 | 4 | 5 | 6;
 export type SLOT_NAME = `SLOT_${slot_number}`;
 export type slot_interval = '00' | '15' | '30' | '45';

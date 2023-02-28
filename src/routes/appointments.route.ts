@@ -1,7 +1,7 @@
 import { IAppointmentService } from '../types/appointment.interface';
 import { Router, Request, Response } from 'express';
-import { CreateAppointmentDTO } from '@dtos/appointment.dto';
-import { getValidatorHandler } from '../middleware/appointment';
+import { CreateAppointmentDTO, UpdateAppointmentDTO } from '@dtos/appointment.dto';
+import { getFullValidatorHandler, getTimeValidatorHandler } from '../middleware/appointment';
 import ValidatorService from '../services/vailidator.service';
 import { CustomError } from '../types/errors';
 import { IMailer, ITemplateService, MailMessageInfo } from '../types';
@@ -20,17 +20,13 @@ function getAppointmentRouter(
     return res.json(availableAppointments);
   });
 
-  appointmentRouter.post('/', getValidatorHandler(validator), async (req: Request, res: Response) => {
+  appointmentRouter.post('/', getFullValidatorHandler(validator), async (req: Request, res: Response) => {
     try {
       const newAppointment = await appointmentService.CreateUserAppointment(req.body as CreateAppointmentDTO);
       sendConfirmationEmail(newAppointment, mailerService, templateService);
       return res.json(newAppointment);
     } catch (error) {
-      console.error(error);
-      if (error instanceof CustomError) {
-        return res.status(401).json(error.toJson());
-      }
-      return res.status(500).json(error);
+      return handleError(res, error);
     }
   });
 
@@ -38,6 +34,29 @@ function getAppointmentRouter(
     const filledAppointments = await appointmentService.GetAllFilledAppointments();
     return res.json(filledAppointments);
   })
+
+  appointmentRouter.get("/:appointmentId", async (req, res) => {
+    try {
+      const { appointmentId } = req.params;
+      const appoinment = await appointmentService.GetAppointmentById(appointmentId);
+
+      return res.json(appoinment);
+    } catch (error) {
+      return handleError(res, error);
+    }
+  });
+
+  appointmentRouter.post("/:appointmentId", getTimeValidatorHandler(validator), async (req, res) => {
+    try {
+      const { appointmentId } = req.params;
+      const { time } = req.body as UpdateAppointmentDTO;
+      const appoinment = await appointmentService.UpdateAppointmentTime(appointmentId, time)
+      return res.json(appoinment);
+    } catch (error) {
+      return handleError(res, error);
+    }
+  });
+
   return appointmentRouter;
 }
 
@@ -94,6 +113,14 @@ async function sendConfirmationEmail(appointment: IAppointment, mailer: IMailer,
   } catch (error) {
     console.error('Error sending email confirmation: ', error);
   }
+}
+
+const handleError = (res: Response, error: unknown) => {
+  console.error(error);
+  if (error instanceof CustomError) {
+    return res.status(error.statusCode).json(error.toJson());
+  }
+  return res.status(500).json(error);
 }
 
 export default getAppointmentRouter;

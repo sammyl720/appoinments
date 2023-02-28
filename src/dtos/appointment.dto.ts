@@ -5,8 +5,7 @@ export interface CreateAppointmentDTO extends UserDTO {
 }
 
 export interface UpdateAppointmentDTO {
-  time: string;
-  appointmentId: string;
+  time: TIME_SLOT;
 }
 
 export interface UserDTO {

@@ -1,7 +1,8 @@
 export enum ErrorType {
   UserAlreadyHasAppointment = "User Already Has Appointment",
   InvalidAppointmentData = "Invalid Appointment Data",
-  AppointmentTimeAlreadyFull = "Appointment Time Already Full"
+  AppointmentTimeAlreadyFull = "Appointment Time Already Full",
+  AppointmentNotFound = "AppointmentNotFound"
 }
 
 export interface ICustomError {
@@ -14,7 +15,7 @@ export class CustomError extends Error {
   /**
    *
    */
-  constructor(message: string, public reason: ErrorType) {
+  constructor(message: string, public reason: ErrorType, public statusCode = 500) {
     super(message);
   }
 

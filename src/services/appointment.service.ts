@@ -61,29 +61,34 @@ export default class AppointmentService implements IAppointmentService {
   }
 
   async GetAppointmentById(id: string) {
-    const appointment: IAppointment | null = await Appointment.findById(id);
+    const appointment: IAppointment | null = await Appointment.findById(id).populate('timeslot');
+    if (!appointment) {
+      throw new CustomError(`Appointment with id ${id}`, ErrorType.AppointmentNotFound, 404);
+    }
     return appointment;
   }
 
   async UpdateAppointmentTime(id: string, updatedAppointTime: TIME_SLOT) {
     const userAppointment = await this.GetAppointmentById(id);
     if (!userAppointment) {
-      throw new Error('Could not find appointment with id: ' + id);
+      throw new CustomError('Could not find appointment with id: ' + id, ErrorType.AppointmentNotFound, 404);
     }
-    if (updatedAppointTime != userAppointment.timeslot.time) {
+    if (updatedAppointTime != userAppointment.timeslot?.time) {
       const timeSlotIsAvaliable = await this.isTimeslotAvailable(updatedAppointTime);
       if (!timeSlotIsAvaliable) {
         throw new Error('There are no appointments available for ' + updatedAppointTime);
       }
 
-      await TimeSlot.findByIdAndDelete(userAppointment.timeslot._id);
+      await TimeSlot.findByIdAndDelete(userAppointment.timeslot?._id);
       const newTimeSlot = new TimeSlot({ time: updatedAppointTime, date: this.getDateForEvent() });
+      await newTimeSlot.save();
 
-      const updatedAppointment: (IAppointment & { _id: string } | null) = await Appointment.findByIdAndUpdate(id, { timeslot: newTimeSlot });
-      return updatedAppointment;
+      await Appointment.findByIdAndUpdate(id, { timeslot: newTimeSlot });
+
+      return this.GetAppointmentById(id);
     }
     else {
-      throw new Error("Please specify a new time for appoinment");
+      throw new CustomError("Please specify a new time for appoinment", ErrorType.AppointmentNotFound, 422);
     }
 
   }
