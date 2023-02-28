@@ -3,6 +3,7 @@ import AppointmentService from './services/appointment.service';
 import ValidatorService from './services/vailidator.service';
 import express, { ErrorRequestHandler } from 'express'
 import connectToDb from './db/database';
+import cors from 'cors';
 import { config, getTransportConfig } from './config';
 import { TemplateService } from './services/template.service';
 import { MailerService } from './services/mailer.service';
@@ -15,6 +16,9 @@ const appointmentService = new AppointmentService(validator);
 const templateService = new TemplateService();
 const mailerService = new MailerService(getTransportConfig());
 
+app.use(cors({
+  origin: config.BASE_URL
+}))
 app.use(express.json());
 
 app.get('/', async (req, res) => {

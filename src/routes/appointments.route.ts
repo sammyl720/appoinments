@@ -46,7 +46,7 @@ function getAppointmentRouter(
     }
   });
 
-  appointmentRouter.post("/:appointmentId", getTimeValidatorHandler(validator), async (req, res) => {
+  appointmentRouter.patch("/:appointmentId", getTimeValidatorHandler(validator), async (req, res) => {
     try {
       const { appointmentId } = req.params;
       const { time } = req.body as UpdateAppointmentDTO;
