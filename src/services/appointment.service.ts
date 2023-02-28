@@ -79,7 +79,7 @@ export default class AppointmentService implements IAppointmentService {
         throw new Error('There are no appointments available for ' + updatedAppointTime);
       }
 
-      await TimeSlot.findByIdAndDelete(userAppointment.timeslot?._id);
+      this.clearTimeSlot(userAppointment.timeslot?._id?.toString());
       const newTimeSlot = new TimeSlot({ time: updatedAppointTime, date: this.getDateForEvent() });
       await newTimeSlot.save();
 
@@ -106,8 +106,19 @@ export default class AppointmentService implements IAppointmentService {
   }
 
   async CancelAppointment(id: string) {
-    const appointment = await Appointment.findByIdAndDelete(id);
-    return !!appointment;
+    const appoinment = await this.GetAppointmentById(id);
+    const timeslotId = appoinment.timeslot?._id?.toString();
+    const wasDeleted = await Appointment.findByIdAndDelete(id);
+    if (!wasDeleted) {
+      throw new CustomError('Could not delete appointment with id ' + id, ErrorType.AppointmentNotFound, 404)
+    }
+    this.clearTimeSlot(appoinment.timeslot?._id?.toString());
+    return true;
+  }
+
+  private async clearTimeSlot(timeSlotId?: string) {
+    const wasDeleted = await TimeSlot.findByIdAndDelete(timeSlotId);
+    return wasDeleted;
   }
 
   async GetAllAvailableAppointments() {

@@ -57,6 +57,16 @@ function getAppointmentRouter(
     }
   });
 
+  appointmentRouter.delete("/:appointmentId", async (req, res) => {
+    try {
+      const { appointmentId } = req.params;
+      await appointmentService.CancelAppointment(appointmentId);
+      return res.json({ message: 'Appointment Deleted' });
+    } catch (error) {
+      return handleError(res, error);
+    }
+  });
+
   return appointmentRouter;
 }
 
