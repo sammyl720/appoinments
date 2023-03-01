@@ -6,9 +6,14 @@ import TimeSlot from "../models/TimeSlot";
 import { IAppointment } from "../models/interfaces";
 import { TIME_RXG } from "../config/regex";
 import { CustomError, ErrorType } from "../types/errors";
+import { createClient } from "redis";
+import { ICache } from "../types/cache.interface";
 
 export default class AppointmentService implements IAppointmentService {
-  constructor(private validator: Validator) {
+  constructor(
+    private validator: Validator,
+    private cacheClient: ICache
+  ) {
   }
 
   async CreateUserAppointment(appointment: CreateAppointmentDTO): Promise<IAppointment> {
@@ -45,6 +50,7 @@ export default class AppointmentService implements IAppointmentService {
     });
 
     await createdAppointment.save();
+    this.cacheClient.set(createdAppointment._id.toString(), JSON.stringify(createdAppointment));
     return createdAppointment;
   }
 
@@ -61,6 +67,17 @@ export default class AppointmentService implements IAppointmentService {
   }
 
   async GetAppointmentById(id: string) {
+    const cachedAppointment = await this.cacheClient.get(id);
+    if (!!cachedAppointment) {
+      console.log('retrieving appointment from cache ', id);
+      return JSON.parse(cachedAppointment) as IAppointment;
+    }
+
+    const appointment = await this.findById(id);
+    return appointment;
+  }
+
+  private async findById(id: string) {
     const appointment: IAppointment | null = await Appointment.findById(id).populate('timeslot');
     if (!appointment) {
       throw new CustomError(`Appointment with id ${id}`, ErrorType.AppointmentNotFound, 404);
@@ -84,23 +101,12 @@ export default class AppointmentService implements IAppointmentService {
       await newTimeSlot.save();
 
       await Appointment.findByIdAndUpdate(id, { timeslot: newTimeSlot });
-
-      return this.GetAppointmentById(id);
+      const updatedAppointment = await this.findById(id);
+      this.cacheClient.set(id, JSON.stringify(updatedAppointment));
+      return updatedAppointment;
     }
     else {
       throw new CustomError("Please specify a new time for appoinment", ErrorType.AppointmentNotFound, 422);
-    }
-
-  }
-
-  private async updateAppointmentTime(appointmentId: string, newAppointTime: TIME_SLOT) {
-    const timeSlotIsAvaliable = await this.isTimeslotAvailable(newAppointTime);
-    if (!timeSlotIsAvaliable) {
-      throw new Error('There are no appointments available for ' + newAppointTime);
-    }
-    const appointment = await Appointment.findById(appointmentId);
-    if (!appointment) {
-      throw new Error('Could not find appointment with id ' + appointmentId)
     }
 
   }
@@ -113,6 +119,8 @@ export default class AppointmentService implements IAppointmentService {
       throw new CustomError('Could not delete appointment with id ' + id, ErrorType.AppointmentNotFound, 404)
     }
     this.clearTimeSlot(appoinment.timeslot?._id?.toString());
+    const a = this.cacheClient.del(id);
+    console.log('del', a);
     return true;
   }
 

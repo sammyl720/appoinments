@@ -22,7 +22,8 @@ const {
   EMAIL_HOST,
   EMAIL,
   PASSWORD,
-  KEY
+  KEY,
+  REDIS_URL
 } = process.env;
 
 export const config = {
@@ -38,6 +39,7 @@ export const config = {
   NODE_ENV,
   COOKIE_SECRET,
   LOCATION,
+  REDIS_URL,
   KEY,
   BASE_URL,
   APPOINTMENT_PERIODS_PER_HOUR: 4

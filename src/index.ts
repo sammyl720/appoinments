@@ -2,17 +2,17 @@ import getAppointmentRouter from './routes/appointments.route';
 import AppointmentService from './services/appointment.service';
 import ValidatorService from './services/vailidator.service';
 import express, { ErrorRequestHandler } from 'express'
-import connectToDb from './db/database';
+import connectToDb, { RedisClient } from './db/database';
 import cors from 'cors';
 import { config, getTransportConfig } from './config';
 import { TemplateService } from './services/template.service';
 import { MailerService } from './services/mailer.service';
 
+const redisClient = RedisClient.getClient();
 const PORT = config.PORT || 3031;
 const app = express();
-
 const validator = new ValidatorService();
-const appointmentService = new AppointmentService(validator);
+const appointmentService = new AppointmentService(validator, redisClient);
 const templateService = new TemplateService();
 const mailerService = new MailerService(getTransportConfig());
 
@@ -43,4 +43,10 @@ app.use(ErrorHandler);
 app.listen(PORT, async () => {
   console.log('server up on port ' + PORT);
   await connectToDb();
+  try {
+    await redisClient.connect();
+    console.log('connected to redis');
+  } catch (error) {
+    redisClient.disconnect();
+  }
 });
