@@ -142,7 +142,7 @@ export default class AppointmentService implements IAppointmentService {
       }
 
       const availableAppointments = await this.getAvailableAppointmentsFromDb();
-      this.cacheClient.setWithExpiration(AVAILABLE_APPOINTMENTS_KEY, JSON.stringify(availableAppointments), CACHE_EXPIRATION);
+      this.cacheClient.set(AVAILABLE_APPOINTMENTS_KEY, JSON.stringify(availableAppointments), 'EX', CACHE_EXPIRATION);
       return availableAppointments;
     } catch (error) {
       console.error(error);
