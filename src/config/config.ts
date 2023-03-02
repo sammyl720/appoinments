@@ -23,7 +23,9 @@ const {
   EMAIL,
   PASSWORD,
   KEY,
-  REDIS_URL
+  REDIS_URL,
+  OAUTH_AUDIENCE,
+  OAUTH_ISSUER_URL
 } = process.env;
 
 export const config = {
@@ -42,6 +44,8 @@ export const config = {
   REDIS_URL,
   KEY,
   BASE_URL,
+  OAUTH_AUDIENCE,
+  OAUTH_ISSUER_URL,
   APPOINTMENT_PERIODS_PER_HOUR: 4
 }
 

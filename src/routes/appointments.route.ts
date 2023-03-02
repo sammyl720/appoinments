@@ -30,11 +30,6 @@ function getAppointmentRouter(
     }
   });
 
-  appointmentRouter.get('/booked', async (req: Request, res: Response) => {
-    const filledAppointments = await appointmentService.GetAllFilledAppointments();
-    return res.json(filledAppointments);
-  })
-
   appointmentRouter.get("/:appointmentId", async (req, res) => {
     try {
       const { appointmentId } = req.params;

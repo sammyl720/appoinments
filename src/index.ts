@@ -8,6 +8,7 @@ import { config, getTransportConfig } from './config';
 import { TemplateService } from './services/template.service';
 import { MailerService } from './services/mailer.service';
 import { CacheService } from './services/cache.service';
+import getAdminRouter from './routes/admin.route';
 
 const redisClient = RedisClient.getClient();
 const PORT = config.PORT || 3031;
@@ -32,6 +33,8 @@ app.use('/appointments', getAppointmentRouter(
   mailerService,
   templateService
 ));
+
+app.use('/admin', getAdminRouter(appointmentService));
 
 const ErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
   if (!!err) {

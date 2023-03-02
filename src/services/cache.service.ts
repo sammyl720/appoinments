@@ -28,6 +28,7 @@ export class CacheService implements ICache {
 
   async setWithExpiration(key: string, value: string, expireTime: number) {
     try {
+      // @ts-ignore
       const result = await this.cacheClient.set(key, value, 'EX', expireTime);
       return result;
     } catch (error) {
