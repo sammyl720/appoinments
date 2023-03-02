@@ -25,13 +25,15 @@ const {
   KEY,
   REDIS_URL,
   OAUTH_AUDIENCE,
-  OAUTH_ISSUER_URL
+  OAUTH_ISSUER_URL,
+  EVENT_NAME
 } = process.env;
 
 export const config = {
   MONGO_URI,
   MONGO_DB_NAME,
   EVENT_DATE,
+  EVENT_NAME,
   PORT,
   LOCATION_NAME,
   LOCATION_LONG_NAME,

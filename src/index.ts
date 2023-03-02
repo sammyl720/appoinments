@@ -9,6 +9,8 @@ import { TemplateService } from './services/template.service';
 import { MailerService } from './services/mailer.service';
 import { CacheService } from './services/cache.service';
 import getAdminRouter from './routes/admin.route';
+import { EventService } from './services/event.service';
+import { dayIsInThePass } from './utils';
 
 const redisClient = RedisClient.getClient();
 const PORT = config.PORT || 3031;
@@ -17,6 +19,7 @@ const validator = new ValidatorService();
 const appointmentService = new AppointmentService(validator, new CacheService(redisClient));
 const templateService = new TemplateService();
 const mailerService = new MailerService(getTransportConfig());
+const eventDetailsService = new EventService(redisClient);
 
 app.use(cors({
   origin: config.BASE_URL
@@ -24,7 +27,12 @@ app.use(cors({
 app.use(express.json());
 
 app.get('/', async (req, res) => {
-  return res.json({ message: 'Appointment API' })
+  const eventDetails = await eventDetailsService.get();
+
+  if (dayIsInThePass(eventDetails.date)) {
+    return res.status(404).json({ message: 'No Event' });
+  }
+  return res.json({ event: eventDetails })
 });
 
 app.use('/appointments', getAppointmentRouter(

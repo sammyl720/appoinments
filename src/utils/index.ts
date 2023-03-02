@@ -17,3 +17,10 @@ export function getPathToDirectory(directoryName: string) {
     currentDirectory = dirname(currentDirectory);
   }
 }
+
+export function dayIsInThePass(date: Date | null) {
+  const today = new Date();
+  today.setHours(12);
+
+  return !!date ? today.getTime() > date.getTime() : true;
+}
