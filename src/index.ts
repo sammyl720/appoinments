@@ -7,12 +7,13 @@ import cors from 'cors';
 import { config, getTransportConfig } from './config';
 import { TemplateService } from './services/template.service';
 import { MailerService } from './services/mailer.service';
+import { CacheService } from './services/cache.service';
 
 const redisClient = RedisClient.getClient();
 const PORT = config.PORT || 3031;
 const app = express();
 const validator = new ValidatorService();
-const appointmentService = new AppointmentService(validator, redisClient);
+const appointmentService = new AppointmentService(validator, new CacheService(redisClient));
 const templateService = new TemplateService();
 const mailerService = new MailerService(getTransportConfig());
 

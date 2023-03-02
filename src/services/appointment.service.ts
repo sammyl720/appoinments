@@ -6,9 +6,10 @@ import TimeSlot from "../models/TimeSlot";
 import { IAppointment } from "../models/interfaces";
 import { TIME_RXG } from "../config/regex";
 import { CustomError, ErrorType } from "../types/errors";
-import { createClient } from "redis";
 import { ICache } from "../types/cache.interface";
 
+const AVAILABLE_APPOINTMENTS_KEY = 'AVAILABLE_APPOINTMENTS_KEY';
+const CACHE_EXPIRATION = 3 * 60 * 60;
 export default class AppointmentService implements IAppointmentService {
   constructor(
     private validator: Validator,
@@ -102,13 +103,18 @@ export default class AppointmentService implements IAppointmentService {
 
       await Appointment.findByIdAndUpdate(id, { timeslot: newTimeSlot });
       const updatedAppointment = await this.findById(id);
-      this.cacheClient.set(id, JSON.stringify(updatedAppointment));
+      this.updateAppointmentInCache(id, updatedAppointment);
       return updatedAppointment;
     }
     else {
       throw new CustomError("Please specify a new time for appoinment", ErrorType.AppointmentNotFound, 422);
     }
 
+  }
+
+  private updateAppointmentInCache(id: string, updatedAppointment: IAppointment) {
+    this.cacheClient.set(id, JSON.stringify(updatedAppointment));
+    this.cacheClient.del(AVAILABLE_APPOINTMENTS_KEY);
   }
 
   async CancelAppointment(id: string) {
@@ -119,42 +125,60 @@ export default class AppointmentService implements IAppointmentService {
       throw new CustomError('Could not delete appointment with id ' + id, ErrorType.AppointmentNotFound, 404)
     }
     this.clearTimeSlot(appoinment.timeslot?._id?.toString());
-    const a = this.cacheClient.del(id);
-    console.log('del', a);
+    this.deleteAppointmentFromCache(id);
     return true;
   }
+
+  private deleteAppointmentFromCache(id: string) {
+    this.cacheClient.del(id);
+    this.cacheClient.del(AVAILABLE_APPOINTMENTS_KEY);
+  }
+  async GetAllAvailableAppointments() {
+    try {
+      const cachedAvaibleAppointments = await this.cacheClient.get(AVAILABLE_APPOINTMENTS_KEY);
+
+      if (!!cachedAvaibleAppointments) {
+        return JSON.parse(cachedAvaibleAppointments) as AvailableAppointments;
+      }
+
+      const availableAppointments = await this.getAvailableAppointmentsFromDb();
+      this.cacheClient.setWithExpiration(AVAILABLE_APPOINTMENTS_KEY, JSON.stringify(availableAppointments), CACHE_EXPIRATION);
+      return availableAppointments;
+    } catch (error) {
+      console.error(error);
+    } finally {
+      const availableAppointments: AvailableAppointments = {
+        appointmentsLeft: 0,
+        slots: []
+      }
+      return availableAppointments;
+    }
+  };
 
   private async clearTimeSlot(timeSlotId?: string) {
     const wasDeleted = await TimeSlot.findByIdAndDelete(timeSlotId);
     return wasDeleted;
   }
 
-  async GetAllAvailableAppointments() {
+  private async getAvailableAppointmentsFromDb() {
     const avaliableSlots: AvailableTimeSlot[] = [];
-    const slotsPerPeriod = this.getAppointmentPerTimeSlot();
     const allSlots = this.GetAllPossibleAppointments();
     let slotsLeft = 0;
 
-    try {
-      for (let slot of allSlots) {
-        const appointmentLeftForSlot = await this.getAppointmentsAvailableForSlot(slot);
-        slotsLeft += appointmentLeftForSlot;
-        avaliableSlots.push({
-          time: slot,
-          available: appointmentLeftForSlot
-        })
-      }
-    } catch (error) {
-      console.error(error);
+    for (let slot of allSlots) {
+      const appointmentLeftForSlot = await this.getAppointmentsAvailableForSlot(slot);
+      slotsLeft += appointmentLeftForSlot;
+      avaliableSlots.push({
+        time: slot,
+        available: appointmentLeftForSlot
+      });
     }
-    finally {
-      const availableAppointments: AvailableAppointments = {
-        appointmentsLeft: slotsLeft,
-        slots: avaliableSlots
-      }
-      return availableAppointments;
-    }
-  };
+
+    return {
+      appointmentsLeft: slotsLeft,
+      slots: avaliableSlots
+    };
+  }
 
   private async GetUserAppoinment(user: UserDTO): Promise<IAppointment | null> {
     try {
