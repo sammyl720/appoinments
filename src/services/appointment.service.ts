@@ -9,7 +9,7 @@ import { CustomError, ErrorType } from "../types/errors";
 import { ICache } from "../types/cache.interface";
 
 const AVAILABLE_APPOINTMENTS_KEY = 'AVAILABLE_APPOINTMENTS_KEY';
-const CACHE_EXPIRATION = 3 * 60 * 60;
+const CACHE_EXPIRATION = 10 //3 * 60 * 60;
 export default class AppointmentService implements IAppointmentService {
   constructor(
     private validator: Validator,
@@ -146,13 +146,14 @@ export default class AppointmentService implements IAppointmentService {
       return availableAppointments;
     } catch (error) {
       console.error(error);
-    } finally {
-      const availableAppointments: AvailableAppointments = {
-        appointmentsLeft: 0,
-        slots: []
-      }
-      return availableAppointments;
     }
+
+    const availableAppointments: AvailableAppointments = {
+      appointmentsLeft: 0,
+      slots: []
+    }
+    return availableAppointments;
+
   };
 
   private async clearTimeSlot(timeSlotId?: string) {
