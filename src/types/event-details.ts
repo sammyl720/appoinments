@@ -1,3 +1,5 @@
+import { IEventData } from "@models/interfaces";
+
 export interface IEventDetails {
   title: string;
   description?: string;
@@ -6,6 +8,7 @@ export interface IEventDetails {
   endingTime: string;
   affilates: string[];
   location: ILocation;
+
 }
 
 export interface ILocation {
@@ -21,5 +24,10 @@ export interface ICoordinates {
 }
 
 export interface IEventService {
-  get: () => Promise<IEventDetails>;
+  get: () => Promise<IEventData | null>;
+  getNextEvent: () => Promise<IEventData | null>;
+  updateEvent: (event: Partial<Omit<IEventData, 'date' | 'createdBy' | 'createdOn' | 'location'>>, eventId: string) => Promise<IEventData | null>;
+
+  createEvent: (event: IEventData) => Promise<IEventData | null>;
+
 }

@@ -2,7 +2,10 @@ export enum ErrorType {
   UserAlreadyHasAppointment = "User Already Has Appointment",
   InvalidAppointmentData = "Invalid Appointment Data",
   AppointmentTimeAlreadyFull = "Appointment Time Already Full",
-  AppointmentNotFound = "AppointmentNotFound"
+  AppointmentNotFound = "AppointmentNotFound",
+  NotAuthorized = 'NOT AUTHORIZED',
+  EventAlreadyExists = 'Event already exists',
+  EventNotSet = 'Event date not set'
 }
 
 export interface ICustomError {

@@ -24,6 +24,11 @@ const AppointmentSchema = new Schema<IAppointment>({
     type: Schema.Types.ObjectId,
     ref: 'Timeslot'
   },
+  event: {
+    required: true,
+    type: Schema.Types.ObjectId,
+    ref: 'Event'
+  },
   phone: {
     type: String,
     required: true,

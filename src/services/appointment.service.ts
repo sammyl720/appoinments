@@ -3,18 +3,25 @@ import { AvailableAppointments, AvailableTimeSlot, IAppointmentService, TimePoin
 import { CreateAppointmentDTO, UserDTO } from "../dtos/appointment.dto";
 import { config } from "../config";
 import TimeSlot from "../models/TimeSlot";
-import { IAppointment } from "../models/interfaces";
+import { IAppointment, IEventData } from "../models/interfaces";
 import { TIME_RXG } from "../config/regex";
 import { CustomError, ErrorType } from "../types/errors";
 import { ICache } from "../types/cache.interface";
+import { EventService } from "./event.service";
+import { IEventService } from "../types/event-details";
 
 const AVAILABLE_APPOINTMENTS_KEY = 'AVAILABLE_APPOINTMENTS_KEY';
 const CACHE_EXPIRATION = 10 //3 * 60 * 60;
 export default class AppointmentService implements IAppointmentService {
+  private nextEvent: IEventData | null = null;
   constructor(
     private validator: Validator,
-    private cacheClient: ICache
+    private cacheClient: ICache,
+    private eventService: IEventService
   ) {
+    eventService.getNextEvent().then(event => {
+      this.nextEvent = event;
+    }).catch(console.error);
   }
 
   async CreateUserAppointment(appointment: CreateAppointmentDTO): Promise<IAppointment> {
@@ -23,7 +30,7 @@ export default class AppointmentService implements IAppointmentService {
 
     if (!userCanCreateAppointment || !slotOpen) {
       const errorReason = !userCanCreateAppointment ? ErrorType.UserAlreadyHasAppointment : ErrorType.AppointmentTimeAlreadyFull;
-      throw new CustomError("Could not create appointment for", errorReason);
+      throw new CustomError(`Could not create appointment for`, errorReason, 400);
     }
     const date = this.getDateForEvent();
 
@@ -36,7 +43,7 @@ export default class AppointmentService implements IAppointmentService {
     } = appointment;
     const timeslot = new TimeSlot({
       time: time,
-      date: this.getDateForEvent()
+      date
     });
 
     await timeslot.save();
@@ -47,7 +54,8 @@ export default class AppointmentService implements IAppointmentService {
       email,
       phone,
       date,
-      timeslot
+      timeslot,
+      event: this.event._id
     });
 
     await createdAppointment.save();
@@ -57,8 +65,7 @@ export default class AppointmentService implements IAppointmentService {
 
   async GetAllFilledAppointments() {
     try {
-      const date = this.getDateForEvent();
-      const allAppointments = await Appointment.find({ date }).populate('timeslot');
+      const allAppointments = await Appointment.find({ event: this.event._id }).populate('timeslot');
 
       return allAppointments as IAppointment[];
     } catch (error) {
@@ -219,11 +226,11 @@ export default class AppointmentService implements IAppointmentService {
   }
 
   private getStartTimePoint() {
-    return this.getTimePoint(config.STARTING_TIME ?? '2:30');
+    return this.getTimePoint(this.event.startingTime ?? '2:30');
   }
 
   private getEndTimePoint() {
-    return this.getTimePoint(config.ENDING_TIME ?? '9:30');
+    return this.getTimePoint(this.event.endingTime ?? '9:30');
   }
 
   private getTimePoint(time: string) {
@@ -271,29 +278,26 @@ export default class AppointmentService implements IAppointmentService {
   }
 
   private getAppointmentPerTimeSlot() {
-    return Math.floor(this.getAppointPerHour() / this.getAppointmentPeriodsPerHour());
+    return this.event.appointmentsPerInterval;
   }
 
   private getAppointPerHour() {
-    return Number(config.SLOTS_PER_HOUR ?? 24);
+    return this.getAppointmentPeriodsPerHour() * this.getAppointmentPerTimeSlot();
   }
 
   private getAppointmentPeriodsPerHour() {
-    return config.APPOINTMENT_PERIODS_PER_HOUR;
+    return this.event.intervalsPerHour;
   }
 
   private getDateForEvent() {
-    const eventDate = config.EVENT_DATE;
+    return this.event.date;
+  }
 
-    if (!this.validator.isValidDateString(eventDate)) {
-      throw new Error('Invalid config date set: ' + eventDate);
+  get event() {
+    if (!this.nextEvent) {
+      throw new CustomError('Event not set', ErrorType.EventNotSet, 500);
     }
 
-    const date = new Date(eventDate as string);
-    if (new Date().getTime() > date.getTime()) {
-      throw new Error('Event date most be in the future');
-    }
-
-    return date;
+    return this.nextEvent;
   }
 }

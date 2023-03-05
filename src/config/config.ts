@@ -1,5 +1,6 @@
-import { ITransportConfig } from '../types';
+import { ITransportConfig, Validator } from '../types';
 import dotenv from 'dotenv';
+import ValidatorService from '../services/vailidator.service';
 
 if (process.env.NODE_ENV != 'production') {
   dotenv.config();
@@ -24,9 +25,11 @@ const {
   PASSWORD,
   KEY,
   REDIS_URL,
-  OAUTH_AUDIENCE,
-  OAUTH_ISSUER_URL,
-  EVENT_NAME
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
+  API_URL,
+  EVENT_NAME,
+  ADMIN_EMAIL
 } = process.env;
 
 export const config = {
@@ -46,8 +49,6 @@ export const config = {
   REDIS_URL,
   KEY,
   BASE_URL,
-  OAUTH_AUDIENCE,
-  OAUTH_ISSUER_URL,
   APPOINTMENT_PERIODS_PER_HOUR: 4
 }
 
@@ -62,4 +63,19 @@ export const getTransportConfig = (): ITransportConfig => {
       pass: PASSWORD
     }
   }
+}
+
+export const getAdminEmailList = (validator: Validator = new ValidatorService()) => {
+  const adminEmails = ADMIN_EMAIL ?? '';
+  return adminEmails.split(',').filter(email => {
+    return validator.isValidEmail(email.trim())
+  })
+}
+
+export const getGoogleCredentails = () => {
+  return {
+    GOOGLE_CLIENT_ID,
+    GOOGLE_CLIENT_SECRET,
+    API_URL
+  } as { [key: string]: string }
 }

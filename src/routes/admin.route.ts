@@ -1,39 +1,88 @@
-import { IAppointmentService } from '../types/appointment.interface';
+import { IAppointmentService } from 'types/appointment.interface';
 import { Router, Request, Response } from 'express';
-import { config } from '../config';
-import { auth } from 'express-oauth2-jwt-bearer';
-
+import { getAuthMiddleware } from '../middleware/auth.middleware';
+import { AuthService } from '@services/auth.service';
+import { GoogleLoginCreds } from '@dtos/login.dto';
+import cookie from 'cookie';
+import { config } from '../config/config';
+import { EventService } from '../services/event.service';
+import { IEventData } from '@models/interfaces';
+import { IEventDto, validateCreateEventDto } from '../dtos/event.dto';
+import { CustomError } from '../types/errors';
 
 function getAdminRouter(
   appointmentService: IAppointmentService,
+  authService: AuthService,
+  eventService: EventService
 ) {
   const adminRouter = Router();
 
-  if (oAuthCredentialSet()) {
-    const jwtCheck = auth({
-      audience: config.OAUTH_AUDIENCE,
-      issuerBaseURL: config.OAUTH_ISSUER_URL,
-      tokenSigningAlg: 'RS256'
-    });
+  adminRouter.get('/booked', getAuthMiddleware(authService), async (req: Request, res: Response) => {
+    const filledAppointments = await appointmentService.GetAllFilledAppointments();
+    return res.json(filledAppointments);
+  });
 
-    adminRouter.use(jwtCheck);
+  adminRouter.post('/event', getAuthMiddleware(authService), async (req, res) => {
+    try {
+      // @ts-ignore
+      const name = req.user?.name ?? '';
+      const createEventDto = req.body;
+      const isValidCreateEventDTO = validateCreateEventDto(createEventDto);
 
-    adminRouter.get('/booked', async (req: Request, res: Response) => {
-      const filledAppointments = await appointmentService.GetAllFilledAppointments();
-      return res.json(filledAppointments);
-    })
-  }
+      if (isValidCreateEventDTO) {
+        const event: IEventData = {
+          createdBy: name,
+          ...createEventDto
+        }
+
+        const dbResult = await eventService.createEvent(event);
+        return res.status(200).json({ event: dbResult })
+      }
+      else {
+        return res.status(422).json({ message: 'Make sure all fields are correctly filled' })
+      }
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error })
+    }
+  })
+
+  adminRouter.get('/', getAuthMiddleware(authService), async (req, res) => {
+    try {
+      const bookedEvent = await Promise.all([
+        appointmentService.GetAllFilledAppointments(),
+        eventService.getNextEvent()
+      ]).then(([booked, event]) => ({ booked, event }))
+      return res.status(200).json(bookedEvent);
+    } catch (error) {
+      if (error instanceof CustomError) {
+        return res.status(error.statusCode).json(error.toJson());
+      }
+
+      return res.status(500).json({ error })
+    }
+  })
+
+  adminRouter.post('/login', async (req, res, next) => {
+    const { credential } = req.body as GoogleLoginCreds;
+    if (!credential) {
+      return res.status(422);
+    }
+
+    const payload = await authService.verifyAdmin(credential);
+    if (!payload) {
+      return res.status(401).json({ message: 'Invalid Credentails for admin access' });
+    }
+    return res.json({ token: credential })
+  });
+
+  adminRouter.get('/logout', (req, res) => {
+    res.header('Set-Cookie', cookie.serialize('_gac', '', { expires: new Date(Date.now()) }))
+    return res.status(200).json({ message: 'Please login' });
+  })
+
 
   return adminRouter;
-}
-
-function oAuthCredentialSet() {
-  const { OAUTH_AUDIENCE, OAUTH_ISSUER_URL } = config;
-  return isDefinedString(OAUTH_AUDIENCE) && isDefinedString(OAUTH_ISSUER_URL);
-}
-
-function isDefinedString(val: string | undefined) {
-  return !!val && val.length > 0;
 }
 
 export default getAdminRouter;
