@@ -18,9 +18,14 @@ export function getPathToDirectory(directoryName: string) {
   }
 }
 
-export function dayIsInThePass(date: Date | null) {
+export function dayIsInThePass(date: Date | null | string) {
+  if (!date) {
+    return true;
+  }
+
+  date = new Date(date.toString());
   const today = new Date();
   today.setHours(12);
 
-  return !!date ? today.getTime() > date.getTime() : true;
+  return !!date ? today.getTime() > date.getTime?.() : true;
 }
