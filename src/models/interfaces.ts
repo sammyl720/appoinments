@@ -11,6 +11,7 @@ export interface IAppointment extends Document {
   date: Date;
   timeslot: ITimeSlot;
   _id?: Types.ObjectId;
+  event: IEventData
 }
 
 export interface ITimeSlot {

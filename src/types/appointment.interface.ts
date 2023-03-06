@@ -1,5 +1,5 @@
 import { CreateAppointmentDTO } from "../dtos/appointment.dto";
-import { IAppointment } from "../models/interfaces";
+import { IAppointment, IEventData } from "../models/interfaces";
 import { AvailableAppointments, TIME_SLOT } from ".";
 
 export interface IAppointmentService {
@@ -9,4 +9,5 @@ export interface IAppointmentService {
   GetAppointmentById: (id: string) => Promise<IAppointment>;
   CancelAppointment: (id: string) => Promise<boolean>;
   UpdateAppointmentTime: (id: string, updatedAppointmentTime: TIME_SLOT) => Promise<IAppointment>;
+  getEventInfo: () => IEventData
 }

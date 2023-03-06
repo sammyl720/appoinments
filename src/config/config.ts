@@ -9,47 +9,25 @@ if (process.env.NODE_ENV != 'production') {
 const {
   MONGO_URI,
   MONGO_DB_NAME,
-  EVENT_DATE,
   PORT,
-  BASE_URL,
-  LOCATION_NAME,
-  LOCATION_LONG_NAME,
-  STARTING_TIME,
-  ENDING_TIME,
-  SLOTS_PER_HOUR,
+  CLIENT_URL,
   NODE_ENV,
-  COOKIE_SECRET,
-  LOCATION,
   EMAIL_HOST,
   EMAIL,
   PASSWORD,
-  KEY,
+  // KEY,
   REDIS_URL,
-  GOOGLE_CLIENT_ID,
-  GOOGLE_CLIENT_SECRET,
   API_URL,
-  EVENT_NAME,
   ADMIN_EMAIL
 } = process.env;
 
 export const config = {
   MONGO_URI,
   MONGO_DB_NAME,
-  EVENT_DATE,
-  EVENT_NAME,
   PORT,
-  LOCATION_NAME,
-  LOCATION_LONG_NAME,
-  STARTING_TIME,
-  ENDING_TIME,
-  SLOTS_PER_HOUR,
   NODE_ENV,
-  COOKIE_SECRET,
-  LOCATION,
   REDIS_URL,
-  KEY,
-  BASE_URL,
-  APPOINTMENT_PERIODS_PER_HOUR: 4
+  CLIENT_URL
 }
 
 export const getTransportConfig = (): ITransportConfig => {
@@ -70,12 +48,4 @@ export const getAdminEmailList = (validator: Validator = new ValidatorService())
   return adminEmails.split(',').filter(email => {
     return validator.isValidEmail(email.trim())
   })
-}
-
-export const getGoogleCredentails = () => {
-  return {
-    GOOGLE_CLIENT_ID,
-    GOOGLE_CLIENT_SECRET,
-    API_URL
-  } as { [key: string]: string }
 }

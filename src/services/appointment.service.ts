@@ -58,7 +58,7 @@ export default class AppointmentService implements IAppointmentService {
       event: this.event._id
     });
 
-    await createdAppointment.save();
+    await (await createdAppointment.save()).populate('event');
     this.cacheClient.set(createdAppointment._id.toString(), JSON.stringify(createdAppointment));
     return createdAppointment;
   }
@@ -291,6 +291,10 @@ export default class AppointmentService implements IAppointmentService {
 
   private getDateForEvent() {
     return this.event.date;
+  }
+
+  public getEventInfo() {
+    return this.event;
   }
 
   get event() {

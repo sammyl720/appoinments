@@ -6,7 +6,8 @@ import ValidatorService from '../services/vailidator.service';
 import { CustomError } from '../types/errors';
 import { IMailer, ITemplateService, MailMessageInfo } from '../types';
 import { config } from '../config';
-import { IAppointment } from '@models/interfaces';
+import { IAppointment } from '../models/interfaces';
+import { ILocation } from '../types/event-details';
 
 function getAppointmentRouter(
   appointmentService: IAppointmentService,
@@ -23,7 +24,7 @@ function getAppointmentRouter(
   appointmentRouter.post('/', getFullValidatorHandler(validator), async (req: Request, res: Response) => {
     try {
       const newAppointment = await appointmentService.CreateUserAppointment(req.body as CreateAppointmentDTO);
-      sendConfirmationEmail(newAppointment, mailerService, templateService);
+      sendConfirmationEmail(newAppointment, mailerService, templateService, appointmentService.getEventInfo().location);
       return res.json(newAppointment);
     } catch (error) {
       return handleError(res, error);
@@ -65,7 +66,7 @@ function getAppointmentRouter(
   return appointmentRouter;
 }
 
-async function sendConfirmationEmail(appointment: IAppointment, mailer: IMailer, renderer: ITemplateService) {
+async function sendConfirmationEmail(appointment: IAppointment, mailer: IMailer, renderer: ITemplateService, location: ILocation) {
   const {
     email,
     firstName,
@@ -76,7 +77,7 @@ async function sendConfirmationEmail(appointment: IAppointment, mailer: IMailer,
   } = appointment;
 
   try {
-    const website = config.BASE_URL;
+    const website = config.CLIENT_URL;
     const name = firstName + ' ' + lastName;
 
     const templateData = {
@@ -86,7 +87,7 @@ async function sendConfirmationEmail(appointment: IAppointment, mailer: IMailer,
       email,
       name,
       id: _id,
-      location: config.LOCATION,
+      location: location.address,
       formattedDate: date.toDateString()
     }
 
@@ -96,7 +97,7 @@ async function sendConfirmationEmail(appointment: IAppointment, mailer: IMailer,
     Here is your blood donation appointment details.
     When: ${date.toDateString()}
     at ${time}.
-    Where: ${process.env.LOCATION || ''}
+    Where: ${location.address}
 
     To reschedule or cancel the appoinment click the following link
     https://${website}/reschedule/${_id}

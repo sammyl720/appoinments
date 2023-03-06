@@ -30,7 +30,7 @@ const authService = new AuthService(new OAuth2Client());
 const emailNotifier = new EmailNotifier()
 
 app.use(cors({
-  origin: config.BASE_URL
+  origin: config.CLIENT_URL
 }))
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }))
