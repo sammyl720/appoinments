@@ -23,19 +23,14 @@ export class RedisClient {
 async function connectToDb() {
   try {
     mongoose.set('strictQuery', false);
-    const mongoUriAndDb = getMongoUriFromConfig();
-    console.log(mongoUriAndDb);
-    await mongoose.connect(mongoUriAndDb);
+    await mongoose.connect(process.env.MONGO_URI ?? '', {
+      dbName: process.env.MONGO_DB_NAME ?? ''
+    });
     console.log('Conected to db');
   } catch (error) {
     console.error('Connection error', error);
     throw error;
   }
-}
-
-function getMongoUriFromConfig() {
-  const { MONGO_DB_NAME, MONGO_URI } = config;
-  return `${MONGO_URI}/${MONGO_DB_NAME}`;
 }
 
 export default connectToDb;
