@@ -5,7 +5,9 @@ export enum ErrorType {
   AppointmentNotFound = "AppointmentNotFound",
   NotAuthorized = 'NOT AUTHORIZED',
   EventAlreadyExists = 'Event already exists',
-  EventNotSet = 'Event date not set'
+  EventNotSet = 'Event date not set',
+  InvalidEmail = 'Invalid Email',
+  EMailAlreadyRegistered = 'Email Already Registered'
 }
 
 export interface ICustomError {

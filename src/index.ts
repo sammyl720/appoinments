@@ -14,6 +14,8 @@ import { dayIsInThePass } from './utils';
 import cookieParser from 'cookie-parser';
 import { AuthService } from './services/auth.service';
 import { OAuth2Client } from 'google-auth-library';
+import { EmailNotifier } from './services/email-list.service';
+import { CustomError } from './types/errors';
 
 const redisClient = RedisClient.getClient();
 const PORT = config.PORT || 3031;
@@ -25,6 +27,7 @@ const appointmentService = new AppointmentService(validator, cacheService, event
 const templateService = new TemplateService();
 const mailerService = new MailerService(getTransportConfig());
 const authService = new AuthService(new OAuth2Client());
+const emailNotifier = new EmailNotifier()
 
 app.use(cors({
   origin: config.BASE_URL
@@ -41,6 +44,25 @@ app.get('/', async (req, res) => {
   }
   return res.json({ event: eventDetails })
 });
+
+app.post('/notify', async (req, res) => {
+  try {
+    const { email } = req.body;
+    const emailWasRegistered = await emailNotifier.addEmail(email);
+
+    if (emailWasRegistered) {
+      return res.status(200).json({ message: 'Will send a email notification to ' + email + ' when are next event is scheduled. ' });
+    }
+
+    return res.status(500).json({ message: 'Something went wrong' });
+  } catch (error) {
+    if (error instanceof CustomError) {
+      return res.status(error.statusCode).json({ message: error.message })
+    }
+
+    return res.status(500).json({ error })
+  }
+})
 
 app.use('/appointments', getAppointmentRouter(
   appointmentService,
