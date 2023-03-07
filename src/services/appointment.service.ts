@@ -307,7 +307,7 @@ export default class AppointmentService implements IAppointmentService {
 
   private async logAppointmentStatus(appointment: IAppointment, status: AppointmentStatus) {
     const { firstName, lastName, timeslot } = appointment;
-    this.logger.log(`Appointment ${status} for ${firstName + ' ' + lastName} at ${timeslot.time} on ${timeslot.date.toDateString()}`);
+    this.logger.log(`Appointment ${status} for ${firstName + ' ' + lastName} at ${timeslot.time} on ${timeslot.date?.toDateString?.() ?? timeslot.date}`);
   }
 
   public getEventInfo() {
