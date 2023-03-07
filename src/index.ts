@@ -16,6 +16,7 @@ import { AuthService } from './services/auth.service';
 import { OAuth2Client } from 'google-auth-library';
 import { EmailNotifier } from './services/email-list.service';
 import { CustomError } from './types/errors';
+import { EventCalendar } from './services/calendar.service';
 
 const redisClient = RedisClient.getClient();
 const PORT = config.PORT || 3031;
@@ -25,9 +26,10 @@ const cacheService = new CacheService(redisClient);
 const eventDetailsService = new EventService(cacheService);
 const appointmentService = new AppointmentService(validator, cacheService, eventDetailsService);
 const templateService = new TemplateService();
+const calGenerator = new EventCalendar();
 const mailerService = new MailerService(getTransportConfig());
 const authService = new AuthService(new OAuth2Client());
-const emailNotifier = new EmailNotifier()
+const emailNotifier = new EmailNotifier();
 
 app.use(cors({
   origin: config.CLIENT_URL
@@ -68,7 +70,8 @@ app.use('/appointments', getAppointmentRouter(
   appointmentService,
   validator,
   mailerService,
-  templateService
+  templateService,
+  calGenerator
 ));
 
 app.use('/admin', getAdminRouter(appointmentService, authService, eventDetailsService));

@@ -13,12 +13,18 @@ export interface IMessageResult {
   response: string;
   messageId: string;
 }
+
+export interface IMailAttachment {
+  filename: string;
+  content: string;
+}
 export interface MailMessageInfo {
   from: string;
   to: string;
   subject: string;
   text: string;
   html?: string;
+  attachments?: IMailAttachment[]
 }
 
 export interface IMailer {

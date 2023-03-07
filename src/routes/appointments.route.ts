@@ -8,12 +8,15 @@ import { IMailer, ITemplateService, MailMessageInfo } from '../types';
 import { config } from '../config';
 import { IAppointment } from '../models/interfaces';
 import { ILocation } from '../types/event-details';
+import { ICalendar } from '../types/calendar.interface';
+import { generateICalConfigFromAppointment } from '../utils';
 
 function getAppointmentRouter(
   appointmentService: IAppointmentService,
   validator = new ValidatorService(),
   mailerService: IMailer,
-  templateService: ITemplateService
+  templateService: ITemplateService,
+  calGenerator: ICalendar
 ) {
   const appointmentRouter = Router();
   appointmentRouter.get('/', async (req: Request, res: Response) => {
@@ -24,7 +27,8 @@ function getAppointmentRouter(
   appointmentRouter.post('/', getFullValidatorHandler(validator), async (req: Request, res: Response) => {
     try {
       const newAppointment = await appointmentService.CreateUserAppointment(req.body as CreateAppointmentDTO);
-      sendConfirmationEmail(newAppointment, mailerService, templateService, appointmentService.getEventInfo().location);
+      sendConfirmationEmail(newAppointment, mailerService, templateService, appointmentService.getEventInfo().location, calGenerator);
+
       return res.json(newAppointment);
     } catch (error) {
       return handleError(res, error);
@@ -66,7 +70,7 @@ function getAppointmentRouter(
   return appointmentRouter;
 }
 
-async function sendConfirmationEmail(appointment: IAppointment, mailer: IMailer, renderer: ITemplateService, location: ILocation) {
+async function sendConfirmationEmail(appointment: IAppointment, mailer: IMailer, renderer: ITemplateService, location: ILocation, calGenerator: ICalendar) {
   const {
     email,
     firstName,
@@ -100,7 +104,7 @@ async function sendConfirmationEmail(appointment: IAppointment, mailer: IMailer,
     Where: ${location.address}
 
     To reschedule or cancel the appoinment click the following link
-    https://${website}/reschedule/${_id}
+    https://${website}/${_id}
     `;
 
     const mailOptions: MailMessageInfo = {
@@ -110,10 +114,22 @@ async function sendConfirmationEmail(appointment: IAppointment, mailer: IMailer,
       text
     }
 
-    console.table(mailOptions);
+    console.log(mailOptions);
     if (html) {
       mailOptions.html = html;
     }
+
+    const calDocEvent = generateICalConfigFromAppointment(appointment, location);
+    const calDocString = await calGenerator.getCalendarEventString(calDocEvent);
+
+    if (calDocString) {
+      mailOptions.attachments ??= [];
+      mailOptions.attachments.push({
+        filename: 'appointment.ics',
+        content: calDocString
+      })
+    }
+
     const mailResult = await mailer.sendEmail(mailOptions)
     console.log(mailResult);
   } catch (error) {
