@@ -66,7 +66,7 @@ export default class AppointmentService implements IAppointmentService {
       event: this.event._id
     });
 
-    await (await createdAppointment.save()).populate('event');
+    await (await createdAppointment.save()).populate('event timeslot');
     this.logAppointmentStatus(createdAppointment, AppointmentStatus.Created);
     this.cacheClient.set(createdAppointment._id.toString(), JSON.stringify(createdAppointment));
     return createdAppointment;
@@ -95,7 +95,7 @@ export default class AppointmentService implements IAppointmentService {
   }
 
   private async findById(id: string) {
-    const appointment: IAppointment | null = await Appointment.findById(id).populate('timeslot');
+    const appointment: IAppointment | null = await Appointment.findById(id).populate('timeslot event');
     if (!appointment) {
       throw new CustomError(`Appointment with id ${id}`, ErrorType.AppointmentNotFound, 404);
     }

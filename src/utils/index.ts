@@ -68,7 +68,7 @@ export function generateICalConfigFromAppointment(appointment: IAppointment, loc
   let { timeslot, date, event: { title, host }, _id } = appointment;
   const newLineChar = '\n';
 
-  const startDate = getDateTime(date, timeslot.time);
+  const startDate = date instanceof Date ? date : new Date(date);
   const endDate = new Date(startDate);
   endDate.setHours(endDate.getHours() + 1)
 
