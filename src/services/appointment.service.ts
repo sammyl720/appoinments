@@ -25,7 +25,7 @@ export default class AppointmentService implements IAppointmentService {
     private validator: Validator,
     private cacheClient: ICache,
     private eventService: IEventService,
-    private logger: ILogger = new Logger();
+    private logger: ILogger = new Logger()
   ) {
     eventService.getNextEvent().then(event => {
       this.nextEvent = event;
@@ -305,7 +305,7 @@ export default class AppointmentService implements IAppointmentService {
     return this.event.date;
   }
 
-  async private logAppointmentStatus(appointment: IAppointment, status: AppointmentStatus) {
+  private async logAppointmentStatus(appointment: IAppointment, status: AppointmentStatus) {
     const { firstName, lastName, timeslot } = appointment;
     this.logger.log(`Appointment ${status} for ${firstName + ' ' + lastName} at ${timeslot.time} on ${timeslot.date.toDateString()}`);
   }
