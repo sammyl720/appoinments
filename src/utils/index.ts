@@ -75,7 +75,7 @@ export function generateICalConfigFromAppointment(appoinment: IAppointment, loca
   const calEvent: CalEvent = {
     start: startDate,
     end: endDate,
-    summary: `${host}: Blood drive appointment`,
+    summary: `${host ?? 'Event'}: Blood drive appointment`,
     name: title,
     location: location.name + newLineChar + location.address,
   }

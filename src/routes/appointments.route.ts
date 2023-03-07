@@ -39,6 +39,20 @@ function getAppointmentRouter(
     }
   });
 
+  appointmentRouter.get('/:appointmentId/calendar', async (req, res) => {
+    try {
+      const { appointmentId } = req.params;
+      const appointment = await appointmentService.GetAppointmentById(appointmentId);
+      const location = appointmentService.getEventInfo().location;
+      const calDocEvent = generateICalConfigFromAppointment(appointment, location);
+      const calDocString = await calGenerator.getCalendarEventString(calDocEvent);
+      res.setHeader('Content-Type', 'text/calendar');
+      return res.send(calDocString);
+    } catch (error) {
+      return handleError(res, error);
+    }
+  })
+
   appointmentRouter.get("/:appointmentId", async (req, res) => {
     try {
       const { appointmentId } = req.params;

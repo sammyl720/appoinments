@@ -10,6 +10,7 @@ import { ICache } from "../types/cache.interface";
 import { EventService } from "./event.service";
 import { IEventService } from "../types/event-details";
 import { ILogger, Logger } from "./logger.service";
+import { getDateTime } from "../utils";
 
 export enum AppointmentStatus {
   Created = 'created',
@@ -39,7 +40,7 @@ export default class AppointmentService implements IAppointmentService {
       const errorReason = !userCanCreateAppointment ? ErrorType.UserAlreadyHasAppointment : ErrorType.AppointmentTimeAlreadyFull;
       throw new CustomError(`Could not create appointment for`, errorReason, 400);
     }
-    const date = this.getDateForEvent();
+    const date = getDateTime(this.getDateForEvent(), appointment.time);
 
     const {
       firstName,
