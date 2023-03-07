@@ -38,12 +38,23 @@ export function dayIsInThePass(date: Date | null | string) {
 
 export function getDateTime(date: Date, time: TIME_SLOT) {
   const { hour, minute } = getTime(time);
+  const esTimeOffsetInMinutes = -300;
+  setDateTimezoneOffset(date, esTimeOffsetInMinutes);
   date.setHours(hour, minute);
   return date;
 }
 
+export function setDateTimezoneOffset(date: Date, offsetTimeZoneInMinutes: number) {
+  const current = date.getTimezoneOffset();
+  if ((current + offsetTimeZoneInMinutes) === 0) {
+    return date;
+  }
+  const minuteInMs = 60 * 1000;
+  date.setTime(date.getTime() + offsetTimeZoneInMinutes * minuteInMs);
+}
+
 export function getTime(time: TIME_SLOT) {
-  const indexOfAmPm = time.length - 2
+  const indexOfAmPm = time.length - 2;
   const isAfterNoon = time.substring(indexOfAmPm).toLowerCase() === 'pm';
   let [hour, minute] = time.substring(0, indexOfAmPm).split(':').map(t => parseInt(t));
 
