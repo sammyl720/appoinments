@@ -5,6 +5,7 @@ import { IEventData } from "../models/interfaces";
 import LocationModel from '../models/location';
 import EventModel from '../models/event';
 import { CustomError, ErrorType } from "../types/errors";
+import { setDateTimezoneNY } from "../utils";
 const CACHE_KEY = 'EVENT_DETAILS';
 const CACHE_EXPIRATION = 60 * 60 * 12;
 export class EventService implements IEventService {
@@ -45,8 +46,10 @@ export class EventService implements IEventService {
       await location.save()
     }
 
+    const date = setDateTimezoneNY(event.date);
     const dbEvent = new EventModel({
       ...event,
+      date,
       location
     });
 

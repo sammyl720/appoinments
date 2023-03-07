@@ -38,23 +38,17 @@ export function dayIsInThePass(date: Date | null | string) {
 
 export function getDateTime(date: Date, time: TIME_SLOT) {
   const { hour, minute } = getTime(time);
-  const esTimeOffsetInMinutes = -300;
-  date = setDateTimezoneOffset(date, esTimeOffsetInMinutes);
+  date = setDateTimezoneNY(date);
   date.setHours(hour, minute);
   return date;
 }
 
-export function setDateTimezoneOffset(date: Date, offsetTimeZoneInMinutes: number) {
+export function setDateTimezoneNY(date: Date) {
   if (!(date instanceof Date)) {
     date = new Date(date);
   }
 
-  const current = date.getTimezoneOffset();
-  if ((current + offsetTimeZoneInMinutes) === 0) {
-    return date;
-  }
-  const minuteInMs = 60 * 1000;
-  date.setTime(date.getTime() + offsetTimeZoneInMinutes * minuteInMs);
+  date = new Date(date.toLocaleString('en-US', { timeZone: 'America/New_York' }))
   return date;
 }
 
@@ -70,8 +64,8 @@ export function getTime(time: TIME_SLOT) {
   }
 }
 
-export function generateICalConfigFromAppointment(appoinment: IAppointment, location: ILocation): CalEvent {
-  let { timeslot, date, event: { title, host }, _id } = appoinment;
+export function generateICalConfigFromAppointment(appointment: IAppointment, location: ILocation): CalEvent {
+  let { timeslot, date, event: { title, host }, _id } = appointment;
   const newLineChar = '\n';
 
   const startDate = getDateTime(date, timeslot.time);
@@ -82,7 +76,7 @@ export function generateICalConfigFromAppointment(appoinment: IAppointment, loca
     start: startDate,
     end: endDate,
     summary: `${host ?? 'Event'}: Blood drive appointment`,
-    name: title,
+    name: title ?? "Blood drive appointment",
     location: location.name + newLineChar + location.address,
   }
 

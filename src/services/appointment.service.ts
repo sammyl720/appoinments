@@ -114,7 +114,8 @@ export default class AppointmentService implements IAppointmentService {
       }
 
       this.clearTimeSlot(userAppointment.timeslot?._id?.toString());
-      const newTimeSlot = new TimeSlot({ time: updatedAppointTime, date: this.getDateForEvent() });
+      const date = getDateTime(this.getDateForEvent(), updatedAppointTime);
+      const newTimeSlot = new TimeSlot({ time: updatedAppointTime, date });
       await newTimeSlot.save();
 
       await Appointment.findByIdAndUpdate(id, { timeslot: newTimeSlot });
