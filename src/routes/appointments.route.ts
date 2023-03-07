@@ -75,7 +75,7 @@ async function sendConfirmationEmail(appointment: IAppointment, mailer: IMailer,
     email,
     firstName,
     lastName,
-    time,
+    timeslot: { time },
     date,
     _id
   } = appointment;
