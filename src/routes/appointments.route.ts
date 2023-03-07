@@ -10,13 +10,15 @@ import { IAppointment } from '../models/interfaces';
 import { ILocation } from '../types/event-details';
 import { ICalendar } from '../types/calendar.interface';
 import { generateICalConfigFromAppointment } from '../utils';
+import { ILogger, Logger } from '../services/logger.service';
 
 function getAppointmentRouter(
   appointmentService: IAppointmentService,
   validator = new ValidatorService(),
   mailerService: IMailer,
   templateService: ITemplateService,
-  calGenerator: ICalendar
+  calGenerator: ICalendar,
+  logger: ILogger = new Logger()
 ) {
   const appointmentRouter = Router();
   appointmentRouter.get('/', async (req: Request, res: Response) => {
@@ -27,6 +29,8 @@ function getAppointmentRouter(
   appointmentRouter.post('/', getFullValidatorHandler(validator), async (req: Request, res: Response) => {
     try {
       const newAppointment = await appointmentService.CreateUserAppointment(req.body as CreateAppointmentDTO);
+      const { firstName, lastName, timeslot } = newAppointment;
+      logger.log(`Appointment created for ${firstName + ' ' + lastName} at ${timeslot.time} on ${timeslot.date.toDateString()}`);
       sendConfirmationEmail(newAppointment, mailerService, templateService, appointmentService.getEventInfo().location, calGenerator);
 
       return res.json(newAppointment);
@@ -95,6 +99,7 @@ async function sendConfirmationEmail(appointment: IAppointment, mailer: IMailer,
       formattedDate: date.toDateString()
     }
 
+    console.log(`Writing email confirmation for ${name} at ${email}`);
     const html = await renderer.renderTemplate('confirmation', templateData);
     const text = `
     Thank you ${name},
@@ -107,6 +112,7 @@ async function sendConfirmationEmail(appointment: IAppointment, mailer: IMailer,
     https://${website}/${_id}
     `;
 
+    console.log('Configuring email message...');
     const mailOptions: MailMessageInfo = {
       from: process.env.EMAIL as string,
       to: email,
@@ -114,8 +120,8 @@ async function sendConfirmationEmail(appointment: IAppointment, mailer: IMailer,
       text
     }
 
-    console.log(mailOptions);
     if (html) {
+      console.log('Adding html content to email...');
       mailOptions.html = html;
     }
 
@@ -123,6 +129,7 @@ async function sendConfirmationEmail(appointment: IAppointment, mailer: IMailer,
     const calDocString = await calGenerator.getCalendarEventString(calDocEvent);
 
     if (calDocString) {
+      console.log('Adding calendar event to email...');
       mailOptions.attachments ??= [];
       mailOptions.attachments.push({
         filename: 'appointment.ics',
@@ -130,8 +137,13 @@ async function sendConfirmationEmail(appointment: IAppointment, mailer: IMailer,
       })
     }
 
-    const mailResult = await mailer.sendEmail(mailOptions)
-    console.log(mailResult);
+    console.log(`Sending confirmation email to ${email}...`);
+    const mailResult = await mailer.sendEmail(mailOptions);
+
+    if (mailResult.accepted) {
+      console.log('Email sent successfuly');
+    }
+    return mailResult
   } catch (error) {
     console.error('Error sending email confirmation: ', error);
   }

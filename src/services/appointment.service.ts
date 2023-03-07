@@ -9,6 +9,13 @@ import { CustomError, ErrorType } from "../types/errors";
 import { ICache } from "../types/cache.interface";
 import { EventService } from "./event.service";
 import { IEventService } from "../types/event-details";
+import { ILogger, Logger } from "./logger.service";
+
+export enum AppointmentStatus {
+  Created = 'created',
+  Updated = 'updated',
+  Canceled = 'canceled'
+}
 
 const AVAILABLE_APPOINTMENTS_KEY = 'AVAILABLE_APPOINTMENTS_KEY';
 const CACHE_EXPIRATION = 10 //3 * 60 * 60;
@@ -17,7 +24,8 @@ export default class AppointmentService implements IAppointmentService {
   constructor(
     private validator: Validator,
     private cacheClient: ICache,
-    private eventService: IEventService
+    private eventService: IEventService,
+    private logger: ILogger = new Logger();
   ) {
     eventService.getNextEvent().then(event => {
       this.nextEvent = event;
@@ -27,7 +35,6 @@ export default class AppointmentService implements IAppointmentService {
   async CreateUserAppointment(appointment: CreateAppointmentDTO): Promise<IAppointment> {
     const userCanCreateAppointment = await this.canCreateAppointment(appointment);
     const slotOpen = await this.isTimeslotAvailable(appointment.time);
-
     if (!userCanCreateAppointment || !slotOpen) {
       const errorReason = !userCanCreateAppointment ? ErrorType.UserAlreadyHasAppointment : ErrorType.AppointmentTimeAlreadyFull;
       throw new CustomError(`Could not create appointment for`, errorReason, 400);
@@ -59,6 +66,7 @@ export default class AppointmentService implements IAppointmentService {
     });
 
     await (await createdAppointment.save()).populate('event');
+    this.logAppointmentStatus(createdAppointment, AppointmentStatus.Created);
     this.cacheClient.set(createdAppointment._id.toString(), JSON.stringify(createdAppointment));
     return createdAppointment;
   }
@@ -110,14 +118,16 @@ export default class AppointmentService implements IAppointmentService {
 
       await Appointment.findByIdAndUpdate(id, { timeslot: newTimeSlot });
       const updatedAppointment = await this.findById(id);
+      this.logAppointmentStatus(updatedAppointment, AppointmentStatus.Updated);
       this.updateAppointmentInCache(id, updatedAppointment);
       return updatedAppointment;
     }
     else {
       throw new CustomError("Please specify a new time for appoinment", ErrorType.AppointmentNotFound, 422);
     }
-
   }
+
+
 
   private updateAppointmentInCache(id: string, updatedAppointment: IAppointment) {
     this.cacheClient.set(id, JSON.stringify(updatedAppointment));
@@ -127,12 +137,14 @@ export default class AppointmentService implements IAppointmentService {
   async CancelAppointment(id: string) {
     const appoinment = await this.GetAppointmentById(id);
     const timeslotId = appoinment.timeslot?._id?.toString();
+    const { firstName, lastName, timeslot } = appoinment;
     const wasDeleted = await Appointment.findByIdAndDelete(id);
     if (!wasDeleted) {
       throw new CustomError('Could not delete appointment with id ' + id, ErrorType.AppointmentNotFound, 404)
     }
     this.clearTimeSlot(appoinment.timeslot?._id?.toString());
     this.deleteAppointmentFromCache(id);
+    this.logAppointmentStatus(appoinment, AppointmentStatus.Canceled);
     return true;
   }
 
@@ -291,6 +303,11 @@ export default class AppointmentService implements IAppointmentService {
 
   private getDateForEvent() {
     return this.event.date;
+  }
+
+  async private logAppointmentStatus(appointment: IAppointment, status: AppointmentStatus) {
+    const { firstName, lastName, timeslot } = appointment;
+    this.logger.log(`Appointment ${status} for ${firstName + ' ' + lastName} at ${timeslot.time} on ${timeslot.date.toDateString()}`);
   }
 
   public getEventInfo() {
