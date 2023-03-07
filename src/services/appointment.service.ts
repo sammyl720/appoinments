@@ -59,7 +59,7 @@ export default class AppointmentService implements IAppointmentService {
     const createdAppointment = new Appointment({
       firstName,
       lastName,
-      email,
+      email: email.toLowerCase(),
       phone,
       date,
       timeslot,
@@ -118,7 +118,7 @@ export default class AppointmentService implements IAppointmentService {
       const newTimeSlot = new TimeSlot({ time: updatedAppointTime, date });
       await newTimeSlot.save();
 
-      await Appointment.findByIdAndUpdate(id, { timeslot: newTimeSlot });
+      await Appointment.findByIdAndUpdate(id, { timeslot: newTimeSlot, date });
       const updatedAppointment = await this.findById(id);
       this.logAppointmentStatus(updatedAppointment, AppointmentStatus.Updated);
       this.updateAppointmentInCache(id, updatedAppointment);
@@ -204,7 +204,7 @@ export default class AppointmentService implements IAppointmentService {
 
   private async GetUserAppoinment(user: UserDTO): Promise<IAppointment | null> {
     try {
-      const dbUser = await Appointment.findOne({ email: user.email });
+      const dbUser = await Appointment.findOne({ email: user.email.toLowerCase() });
       console.log(dbUser);
       return dbUser;
     } catch (error) {
