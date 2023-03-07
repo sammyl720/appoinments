@@ -39,18 +39,23 @@ export function dayIsInThePass(date: Date | null | string) {
 export function getDateTime(date: Date, time: TIME_SLOT) {
   const { hour, minute } = getTime(time);
   const esTimeOffsetInMinutes = -300;
-  setDateTimezoneOffset(date, esTimeOffsetInMinutes);
+  date = setDateTimezoneOffset(date, esTimeOffsetInMinutes);
   date.setHours(hour, minute);
   return date;
 }
 
 export function setDateTimezoneOffset(date: Date, offsetTimeZoneInMinutes: number) {
+  if (!(date instanceof Date)) {
+    date = new Date(date);
+  }
+
   const current = date.getTimezoneOffset();
   if ((current + offsetTimeZoneInMinutes) === 0) {
     return date;
   }
   const minuteInMs = 60 * 1000;
   date.setTime(date.getTime() + offsetTimeZoneInMinutes * minuteInMs);
+  return date;
 }
 
 export function getTime(time: TIME_SLOT) {
@@ -66,8 +71,9 @@ export function getTime(time: TIME_SLOT) {
 }
 
 export function generateICalConfigFromAppointment(appoinment: IAppointment, location: ILocation): CalEvent {
-  const { timeslot, date, event: { title, host }, _id } = appoinment;
+  let { timeslot, date, event: { title, host }, _id } = appoinment;
   const newLineChar = '\n';
+
   const startDate = getDateTime(date, timeslot.time);
   const endDate = new Date(startDate);
   endDate.setHours(endDate.getHours() + 1)
