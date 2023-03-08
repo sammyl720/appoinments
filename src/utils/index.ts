@@ -51,7 +51,12 @@ export function setDateTimezoneNY(date: Date) {
     date = new Date(date);
   }
 
-  date = new Date(date.toLocaleString('en-US', { timeZone: 'America/New_York' }))
+  const nyOffsetMinutes = -240;
+  const minuteInMs = 60 * 1000;
+  const dayOfMonth = date.getDate();
+
+  date = new Date(date.getTime() + nyOffsetMinutes * minuteInMs);
+  date.setDate(dayOfMonth);
   return date;
 }
 
