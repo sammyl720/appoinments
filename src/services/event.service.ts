@@ -6,8 +6,8 @@ import LocationModel from '../models/location';
 import EventModel from '../models/event';
 import { CustomError, ErrorType } from "../types/errors";
 import { getDateTime } from "../utils";
-const CACHE_KEY = 'EVENT_DETAILS';
-const CACHE_EXPIRATION = 60 * 60;
+const CACHE_KEY = 'CURRENT_EVENT_DETAILS';
+const CACHE_EXPIRATION = 12 * 60 * 60;
 export class EventService implements IEventService {
 
   listeners: IEventListener[] = [];

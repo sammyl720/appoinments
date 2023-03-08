@@ -3,7 +3,7 @@ import { ICache } from "../types/cache.interface";
 export class CacheService implements ICache {
 
   constructor(private cacheClient: ICache, private disable = process.env.NODE_ENV == 'development') {
-    this.disable = true;
+
   }
   async get(key: string) {
     try {

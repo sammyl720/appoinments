@@ -63,17 +63,9 @@ export function generateICalConfigFromAppointment(appointment: IAppointment, loc
   let { timeslot, date, event: { title, host }, _id } = appointment;
   const newLineChar = '\n';
 
-  console.table({
-    slotDate: timeslot.date,
-    date
-  })
   const startDate = date instanceof Date ? date : new Date(date);
   const endDate = new Date(startDate);
   endDate.setHours(endDate.getHours() + 1);
-  console.table({
-    startDate: startDate.toLocaleString(),
-    endDate: endDate.toLocaleString()
-  })
 
   const calEvent: CalEvent = {
     start: startDate,

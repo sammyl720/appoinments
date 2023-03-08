@@ -18,8 +18,8 @@ export enum AppointmentStatus {
   Canceled = 'canceled'
 }
 
-const AVAILABLE_APPOINTMENTS_KEY = 'AVAILABLE_APPOINTMENTS_KEY';
-const CACHE_EXPIRATION = 10 //3 * 60 * 60;
+const AVAILABLE_APPOINTMENTS_KEY = 'OPEN_APPOINTMENTS_KEY';
+const CACHE_EXPIRATION = 10 * 60;
 export default class AppointmentService implements IAppointmentService, IEventListener {
   private nextEvent: IEventData | null = null;
   constructor(
