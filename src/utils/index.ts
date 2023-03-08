@@ -39,30 +39,12 @@ export function dayIsInThePass(date: Date | null | string) {
 }
 
 export function getDateTime(date: Date, time: TIME_SLOT) {
-  const { hour, minute } = getTime(time);
-  console.log('Before tz change', date.toString())
-  date = setDateTimezoneNY(date);
-  console.log('After tz change', date.toString())
-  date.setHours(hour, minute);
-  console.log('After time adjustment', date.toString())
-  return date;
-}
-
-export function setDateTimezoneNY(date: Date) {
   if (!(date instanceof Date)) {
     date = new Date(date);
   }
-
-  const nyOffsetMinutes = -240;
-  const dayOfMonth = date.getDate();
-
-  date = new Date(date.getTime() - getTimeOffset(date) + nyOffsetMinutes * minuteInMs);
-  date.setDate(dayOfMonth);
+  const { hour, minute } = getTime(time);
+  date.setHours(hour, minute);
   return date;
-}
-
-function getTimeOffset(date: Date) {
-  return date.getTimezoneOffset() * minuteInMs;
 }
 
 export function getTime(time: TIME_SLOT) {
