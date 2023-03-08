@@ -45,7 +45,7 @@ export default class AppointmentService implements IAppointmentService, IEventLi
       throw new CustomError(`Could not create appointment for`, errorReason, 400);
     }
     const date = getDateTime(this.getDateForEvent(), appointment.time);
-
+    console.log(`Date for appointment (${appointment.time}): ${date}`);
     const {
       firstName,
       lastName,
@@ -313,7 +313,8 @@ export default class AppointmentService implements IAppointmentService, IEventLi
 
   private async logAppointmentStatus(appointment: IAppointment, status: AppointmentStatus) {
     const { firstName, lastName, timeslot } = appointment;
-    this.logger.log(`Appointment ${status} for ${firstName + ' ' + lastName} at ${timeslot.time} on ${timeslot.date?.toDateString?.() ?? timeslot.date}`);
+    console.log('Has valid date:', timeslot.date);
+    this.logger.log(`Appointment ${status} for ${firstName + ' ' + lastName} at ${timeslot.time} on ${timeslot.date?.toString?.() ?? timeslot.date}`);
   }
 
   public getEventInfo() {
