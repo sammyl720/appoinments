@@ -12,6 +12,9 @@ COPY . .
 
 RUN yarn build
 
+RUN apt update && apt install tzdata -y
+ENV TZ="America/New_York"
+
 EXPOSE ${PORT}
 
 CMD ["yarn", "start" ]
