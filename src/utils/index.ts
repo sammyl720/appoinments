@@ -38,8 +38,11 @@ export function dayIsInThePass(date: Date | null | string) {
 
 export function getDateTime(date: Date, time: TIME_SLOT) {
   const { hour, minute } = getTime(time);
+  console.log('Before tz change', date.toString())
   date = setDateTimezoneNY(date);
+  console.log('After tz change', date.toString())
   date.setHours(hour, minute);
+  console.log('After time adjustment', date.toString())
   return date;
 }
 
@@ -76,8 +79,8 @@ export function generateICalConfigFromAppointment(appointment: IAppointment, loc
   const endDate = new Date(startDate);
   endDate.setHours(endDate.getHours() + 1);
   console.table({
-    startDate,
-    endDate
+    startDate: startDate.toLocaleString(),
+    endDate: endDate.toLocaleString()
   })
 
   const calEvent: CalEvent = {
