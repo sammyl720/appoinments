@@ -11,6 +11,8 @@ console.table({
   locale: localeDate.toUTCString(),
 })
 
+console.log(localeDate.toString())
+console.log(`offset: ${localeDate.getTimezoneOffset()}`)
 console.table({
   ny: nyDate.getTime(),
   la: laDate.getTime(),

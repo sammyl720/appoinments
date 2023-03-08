@@ -7,6 +7,8 @@ import { CalEvent } from "../types/calendar.interface";
 import { config } from '../config/config';
 import { ILocation } from "../types/event-details";
 
+const minuteInMs = 60 * 1000;
+
 export function getPathToDirectory(directoryName: string) {
   let currentDirectory = process.cwd();
 
@@ -52,12 +54,15 @@ export function setDateTimezoneNY(date: Date) {
   }
 
   const nyOffsetMinutes = -240;
-  const minuteInMs = 60 * 1000;
   const dayOfMonth = date.getDate();
 
-  date = new Date(date.getTime() + nyOffsetMinutes * minuteInMs);
+  date = new Date(date.getTime() - getTimeOffset(date) + nyOffsetMinutes * minuteInMs);
   date.setDate(dayOfMonth);
   return date;
+}
+
+function getTimeOffset(date: Date) {
+  return date.getTimezoneOffset() * minuteInMs;
 }
 
 export function getTime(time: TIME_SLOT) {
