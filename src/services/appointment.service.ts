@@ -8,7 +8,7 @@ import { TIME_RXG } from "../config/regex";
 import { CustomError, ErrorType } from "../types/errors";
 import { ICache } from "../types/cache.interface";
 import { EventService } from "./event.service";
-import { IEventService } from "../types/event-details";
+import { IEventListener, IEventService } from "../types/event-details";
 import { ILogger, Logger } from "./logger.service";
 import { getDateTime } from "../utils";
 
@@ -20,7 +20,7 @@ export enum AppointmentStatus {
 
 const AVAILABLE_APPOINTMENTS_KEY = 'AVAILABLE_APPOINTMENTS_KEY';
 const CACHE_EXPIRATION = 10 //3 * 60 * 60;
-export default class AppointmentService implements IAppointmentService {
+export default class AppointmentService implements IAppointmentService, IEventListener {
   private nextEvent: IEventData | null = null;
   constructor(
     private validator: Validator,
@@ -31,6 +31,10 @@ export default class AppointmentService implements IAppointmentService {
     eventService.getNextEvent().then(event => {
       this.nextEvent = event;
     }).catch(console.error);
+  }
+
+  onUpdate(event: IEventData) {
+    this.nextEvent = event;
   }
 
   async CreateUserAppointment(appointment: CreateAppointmentDTO): Promise<IAppointment> {

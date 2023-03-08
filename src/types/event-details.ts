@@ -23,11 +23,16 @@ export interface ICoordinates {
   latitude: number;
 }
 
+export interface IEventListener {
+  onUpdate: (event: IEventData) => void;
+}
 export interface IEventService {
   get: () => Promise<IEventData | null>;
   getNextEvent: () => Promise<IEventData | null>;
   updateEvent: (event: Partial<Omit<IEventData, 'date' | 'createdBy' | 'createdOn' | 'location'>>, eventId: string) => Promise<IEventData | null>;
 
   createEvent: (event: IEventData) => Promise<IEventData | null>;
+
+  addEventListener: (listener: IEventListener) => void;
 
 }

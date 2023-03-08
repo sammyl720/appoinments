@@ -1,6 +1,6 @@
 import { ICache } from "../types/cache.interface";
 import { config } from "../config/config";
-import { IEventDetails, IEventService } from "../types/event-details";
+import { IEventDetails, IEventListener, IEventService } from "../types/event-details";
 import { IEventData } from "../models/interfaces";
 import LocationModel from '../models/location';
 import EventModel from '../models/event';
@@ -10,7 +10,15 @@ const CACHE_KEY = 'EVENT_DETAILS';
 const CACHE_EXPIRATION = 60 * 60;
 export class EventService implements IEventService {
 
+  listeners: IEventListener[] = [];
   constructor(private cache: ICache) { }
+  addEventListener(listener: IEventListener) {
+    if (!this.listeners.find(l => l === listener)) {
+      this.listeners.push(listener);
+    }
+
+  }
+
   // TODO: retrieve events details from db
   async get() {
     return this.getNextEvent();
@@ -54,6 +62,9 @@ export class EventService implements IEventService {
     });
 
     await dbEvent.save();
+
+    this.listeners.forEach(listener => listener.onUpdate(dbEvent));
+
     this.cache.setWithExpiration?.(CACHE_KEY, JSON.stringify(dbEvent), CACHE_EXPIRATION);
     return dbEvent;
   }
