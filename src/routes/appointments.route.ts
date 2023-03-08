@@ -30,7 +30,7 @@ function getAppointmentRouter(
     try {
       const newAppointment = await appointmentService.CreateUserAppointment(req.body as CreateAppointmentDTO);
       const { firstName, lastName, timeslot } = newAppointment;
-      logger.log(`Appointment created for ${firstName + ' ' + lastName} at ${timeslot.time} on ${timeslot.date.toDateString()}`);
+      logger.log(`Appointment created for ${firstName + ' ' + lastName} at ${timeslot.time} on ${timeslot.date}`);
       sendConfirmationEmail(newAppointment, mailerService, templateService, appointmentService.getEventInfo().location, calGenerator);
 
       return res.json(newAppointment);
