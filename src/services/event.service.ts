@@ -7,7 +7,7 @@ import EventModel from '../models/event';
 import { CustomError, ErrorType } from "../types/errors";
 import { setDateTimezoneNY } from "../utils";
 const CACHE_KEY = 'EVENT_DETAILS';
-const CACHE_EXPIRATION = 60 * 60 * 12;
+const CACHE_EXPIRATION = 60 * 60;
 export class EventService implements IEventService {
 
   constructor(private cache: ICache) { }
