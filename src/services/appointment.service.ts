@@ -73,9 +73,13 @@ export default class AppointmentService implements IAppointmentService, IEventLi
     await (await createdAppointment.save()).populate('event timeslot');
     this.logAppointmentStatus(createdAppointment, AppointmentStatus.Created);
     this.cacheClient.set(createdAppointment._id.toString(), JSON.stringify(createdAppointment));
+    this.clearAvailableAppointmentFromCache();
     return createdAppointment;
   }
 
+  async clearAvailableAppointmentFromCache() {
+    await this.cacheClient.del(AVAILABLE_APPOINTMENTS_KEY)
+  }
   async GetAllFilledAppointments() {
     try {
       const allAppointments = await Appointment.find({ event: this.event._id }).populate('timeslot');
@@ -126,6 +130,7 @@ export default class AppointmentService implements IAppointmentService, IEventLi
       const updatedAppointment = await this.findById(id);
       this.logAppointmentStatus(updatedAppointment, AppointmentStatus.Updated);
       this.updateAppointmentInCache(id, updatedAppointment);
+      this.clearAvailableAppointmentFromCache();
       return updatedAppointment;
     }
     else {
@@ -150,6 +155,7 @@ export default class AppointmentService implements IAppointmentService, IEventLi
     }
     this.clearTimeSlot(appoinment.timeslot?._id?.toString());
     this.deleteAppointmentFromCache(id);
+    this.clearAvailableAppointmentFromCache();
     this.logAppointmentStatus(appoinment, AppointmentStatus.Canceled);
     return true;
   }
