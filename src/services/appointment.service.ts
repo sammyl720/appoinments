@@ -200,10 +200,12 @@ export default class AppointmentService implements IAppointmentService, IEventLi
     for (let slot of allSlots) {
       const appointmentLeftForSlot = await this.getAppointmentsAvailableForSlot(slot);
       slotsLeft += appointmentLeftForSlot;
-      avaliableSlots.push({
-        time: slot,
-        available: appointmentLeftForSlot
-      });
+      if (!!appointmentLeftForSlot) {
+        avaliableSlots.push({
+          time: slot,
+          available: appointmentLeftForSlot
+        });
+      }
     }
 
     return {
