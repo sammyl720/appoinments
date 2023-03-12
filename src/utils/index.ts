@@ -33,7 +33,7 @@ export function dayIsInThePass(date: Date | null | string) {
 
   date = new Date(date.toString());
   const today = new Date();
-  today.setHours(22);
+  date.setHours(22);
 
   return !!date ? today.getTime() > date.getTime?.() : true;
 }
