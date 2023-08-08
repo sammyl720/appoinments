@@ -33,7 +33,7 @@ const emailNotifier = new EmailNotifier();
 
 app.use(cors({
   origin: config.CLIENT_URL
-}))
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
