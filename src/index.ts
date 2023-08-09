@@ -25,6 +25,7 @@ const validator = new ValidatorService();
 const cacheService = new CacheService(redisClient);
 const eventDetailsService = new EventService(cacheService);
 const appointmentService = new AppointmentService(validator, cacheService, eventDetailsService);
+appointmentService.clearAvailableAppointmentFromCache();
 const templateService = new TemplateService();
 const calGenerator = new EventCalendar();
 const mailerService = new MailerService(getTransportConfig());
