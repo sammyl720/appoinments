@@ -216,7 +216,8 @@ export default class AppointmentService implements IAppointmentService, IEventLi
 
   private async GetUserAppoinment(user: UserDTO): Promise<IAppointment | null> {
     try {
-      const dbUser = await Appointment.findOne({ email: user.email.toLowerCase() });
+      const date = await this.getDateForEvent();
+      const dbUser = await Appointment.findOne({ email: user.email.toLowerCase(), date });
       console.log(dbUser);
       return dbUser;
     } catch (error) {
