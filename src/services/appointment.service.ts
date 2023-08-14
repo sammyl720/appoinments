@@ -247,7 +247,7 @@ export default class AppointmentService implements IAppointmentService, IEventLi
   }
 
   private async getCountOfAppointmentFilledForSlot(time: TIME_SLOT) {
-    const date = await this.getDateForEvent();
+    const date = getDateTime(this.getDateForEvent(), time)
     const appointmentsReservedForSlot = await TimeSlot.countDocuments({ time, date });
     return appointmentsReservedForSlot;
   }
