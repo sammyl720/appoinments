@@ -166,11 +166,11 @@ export default class AppointmentService implements IAppointmentService, IEventLi
   }
   async GetAllAvailableAppointments() {
     try {
-      const cachedAvaibleAppointments = await this.cacheClient.get(AVAILABLE_APPOINTMENTS_KEY);
+      // const cachedAvaibleAppointments = await this.cacheClient.get(AVAILABLE_APPOINTMENTS_KEY);
 
-      if (!!cachedAvaibleAppointments) {
-        return JSON.parse(cachedAvaibleAppointments) as AvailableAppointments;
-      }
+      // if (!!cachedAvaibleAppointments) {
+      //   return JSON.parse(cachedAvaibleAppointments) as AvailableAppointments;
+      // }
 
       const availableAppointments = await this.getAvailableAppointmentsFromDb();
       this.cacheClient.setWithExpiration?.(AVAILABLE_APPOINTMENTS_KEY, JSON.stringify(availableAppointments), CACHE_EXPIRATION);
@@ -247,7 +247,8 @@ export default class AppointmentService implements IAppointmentService, IEventLi
   }
 
   private async getCountOfAppointmentFilledForSlot(time: TIME_SLOT) {
-    const appointmentsReservedForSlot = await TimeSlot.countDocuments({ time });
+    const date = await this.getDateForEvent();
+    const appointmentsReservedForSlot = await TimeSlot.countDocuments({ time, date });
     return appointmentsReservedForSlot;
   }
 
