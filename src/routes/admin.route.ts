@@ -9,11 +9,13 @@ import { EventService } from '../services/event.service';
 import { IEventData } from '@models/interfaces';
 import { IEventDto, validateCreateEventDto } from '../dtos/event.dto';
 import { CustomError } from '../types/errors';
+import { ICache } from '../types/cache.interface';
 
 function getAdminRouter(
   appointmentService: IAppointmentService,
   authService: AuthService,
-  eventService: EventService
+  eventService: EventService,
+  cache: ICache
 ) {
   const adminRouter = Router();
 
@@ -60,6 +62,17 @@ function getAdminRouter(
       }
 
       return res.status(500).json({ error })
+    }
+  });
+
+  adminRouter.get("/clearcache", getAuthMiddleware(authService), (req,res) => {
+    try {
+      cache.clear?.()
+      console.log('cleared cache');
+      return res.status(201);
+    } catch(err)
+    {
+      return res.status(500).json({ error: err });
     }
   })
 

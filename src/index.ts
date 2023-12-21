@@ -75,7 +75,7 @@ app.use('/appointments', getAppointmentRouter(
   calGenerator
 ));
 
-app.use('/admin', getAdminRouter(appointmentService, authService, eventDetailsService));
+app.use('/admin', getAdminRouter(appointmentService, authService, eventDetailsService, cacheService));
 
 const ErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
   if (!!err) {

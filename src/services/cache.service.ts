@@ -1,3 +1,4 @@
+import { RedisClient } from "db/database";
 import { ICache } from "../types/cache.interface";
 
 export class CacheService implements ICache {
@@ -54,4 +55,10 @@ export class CacheService implements ICache {
       return 1;
     }
   }
+
+  clear() {
+    if (this.cacheClient instanceof RedisClient) {
+      (this.cacheClient as RedisClient).clear()
+    }
+  };
 }

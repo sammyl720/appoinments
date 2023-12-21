@@ -18,6 +18,10 @@ export class RedisClient {
 
     return RedisClient._instance;
   }
+
+  clear() {
+    RedisClient.getClient().flushAll();
+  } 
 }
 
 async function connectToDb() {

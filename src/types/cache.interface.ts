@@ -3,4 +3,5 @@ export interface ICache {
   set: (key: string, value: string) => Promise<string | null>;
   setWithExpiration?: (key: string, value: string, expireTime: number) => Promise<string | null>;
   del: (key: string) => Promise<number>;
+  clear?: (...args:any) => void;
 }
