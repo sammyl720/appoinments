@@ -1,4 +1,4 @@
-import { RedisClient } from "db/database";
+import { RedisClient } from "../db/database";
 import { ICache } from "../types/cache.interface";
 
 export class CacheService implements ICache {
