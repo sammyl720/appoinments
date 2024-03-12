@@ -71,8 +71,8 @@ export default class AppointmentService implements IAppointmentService, IEventLi
     });
 
     await (await createdAppointment.save()).populate('event timeslot');
+    this.cacheClient.set(createdAppointment._id.toString(), JSON.stringify(createdAppointment));
     this.logAppointmentStatus((createdAppointment as unknown) as IAppointment, AppointmentStatus.Created);
-    this.cacheClient.set(createdAppointment?._id.toString(), JSON.stringify(createdAppointment));
     this.clearAvailableAppointmentFromCache();
     return (createdAppointment as unknown) as IAppointment;
   }
