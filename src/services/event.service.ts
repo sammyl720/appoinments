@@ -26,11 +26,17 @@ export class EventService implements IEventService {
 
   async getNextEvent() {
     const cachedEvent = await this.cache.get(CACHE_KEY);
-    if (cachedEvent) {
-      return JSON.parse(cachedEvent) as IEventData;
-    }
+
     let cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - 1);
+
+    if (cachedEvent) {
+      const event = JSON.parse(cachedEvent) as IEventData;
+      if (new Date(event.date) > cutoffDate) {
+        return event;
+      }
+    }
+
     const event = await EventModel.findOne({
       date: {
         $gt: cutoffDate
