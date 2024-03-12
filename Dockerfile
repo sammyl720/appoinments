@@ -1,4 +1,4 @@
-FROM node:16
+FROM node:18
 
 WORKDIR /app
 
@@ -9,8 +9,6 @@ COPY yarn.lock ./
 RUN yarn install
 
 COPY . .
-
-RUN yarn build
 
 RUN apt update && apt install tzdata -y
 ENV TZ="America/New_York"
