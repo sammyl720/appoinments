@@ -11,6 +11,7 @@ import { EventService } from "./event.service";
 import { IEventListener, IEventService } from "../types/event-details";
 import { ILogger, Logger } from "./logger.service";
 import { getDateTime } from "../utils";
+import { ObjectID } from "bson";
 
 export enum AppointmentStatus {
   Created = 'created',
@@ -71,7 +72,7 @@ export default class AppointmentService implements IAppointmentService, IEventLi
     });
 
     await (await createdAppointment.save()).populate('event timeslot');
-    this.cacheClient.set(createdAppointment._id.toString(), JSON.stringify(createdAppointment));
+    this.cacheClient.set((createdAppointment._id as ObjectID).toString(), JSON.stringify(createdAppointment));
     this.logAppointmentStatus((createdAppointment as unknown) as IAppointment, AppointmentStatus.Created);
     this.clearAvailableAppointmentFromCache();
     return (createdAppointment as unknown) as IAppointment;
