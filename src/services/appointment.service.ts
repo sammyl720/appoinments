@@ -72,9 +72,9 @@ export default class AppointmentService implements IAppointmentService, IEventLi
 
     await (await createdAppointment.save()).populate('event timeslot');
     this.logAppointmentStatus((createdAppointment as unknown) as IAppointment, AppointmentStatus.Created);
-    this.cacheClient.set(createdAppointment._id.toString(), JSON.stringify(createdAppointment));
+    this.cacheClient.set(createdAppointment?._id.toString(), JSON.stringify(createdAppointment));
     this.clearAvailableAppointmentFromCache();
-    return createdAppointment;
+    return (createdAppointment as unknown) as IAppointment;
   }
 
   async clearAvailableAppointmentFromCache() {
@@ -219,7 +219,7 @@ export default class AppointmentService implements IAppointmentService, IEventLi
       const date = await this.getDateForEvent();
       const dbUser = await Appointment.findOne({ email: user.email.toLowerCase(), date });
       console.log(dbUser);
-      return dbUser;
+      return (dbUser as unknown) as IAppointment | null;
     } catch (error) {
       console.log(error);
       return null;
