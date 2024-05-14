@@ -11,7 +11,11 @@ export class CacheService implements ICache {
       if (this.disable) {
         return null;
       }
+      console.log("Attempting cache retrieval for: ", key);
       const value = await this.cacheClient.get(key);
+      if (!!value) {
+        console.log(`Cache hit for key '${key}'`)
+      }
       return value;
     } catch (error) {
       console.error(`Cache retrievel attempt failed for key: ${key}`);
@@ -23,6 +27,7 @@ export class CacheService implements ICache {
   async set(key: string, value: string) {
     try {
       if (this.disable) return null;
+      console.log(`Adding key: ${key} with value ${value} to cache`)
       const result = await this.cacheClient.set(key, value);
       return result;
     } catch (error) {
@@ -59,6 +64,14 @@ export class CacheService implements ICache {
   clear() {
     if (this.cacheClient instanceof RedisClient) {
       (this.cacheClient as RedisClient).clear()
+    }
+    else {
+      try {
+        // @ts-ignore
+        this.cacheClient.flushAll()
+      } catch (error) {
+        console.error(error);
+      }
     }
   };
 }

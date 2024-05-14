@@ -65,13 +65,13 @@ function getAdminRouter(
     }
   });
 
-  adminRouter.get("/clearcache", getAuthMiddleware(authService), (req,res) => {
+  adminRouter.get("/clearcache", getAuthMiddleware(authService), (req, res) => {
     try {
+      console.log("clearing cache...")
       cache.clear?.()
       console.log('cleared cache');
-      return res.status(201);
-    } catch(err)
-    {
+      return res.status(201).json({ message: "cached cleared" });
+    } catch (err) {
       return res.status(500).json({ error: err });
     }
   })
