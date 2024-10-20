@@ -2,12 +2,11 @@ import getAppointmentRouter from './routes/appointments.route';
 import AppointmentService from './services/appointment.service';
 import ValidatorService from './services/vailidator.service';
 import express, { ErrorRequestHandler } from 'express'
-import connectToDb, { RedisClient } from './db/database';
 import cors from 'cors';
 import { config, getTransportConfig } from './config';
 import { TemplateService } from './services/template.service';
 import { MailerService } from './services/mailer.service';
-import { CacheService } from './services/cache.service';
+import { CacheService, NoOpCache } from './services/cache.service';
 import getAdminRouter from './routes/admin.route';
 import { EventService } from './services/event.service';
 import { dayIsInThePass } from './utils';
@@ -18,11 +17,10 @@ import { EmailNotifier } from './services/email-list.service';
 import { CustomError } from './types/errors';
 import { EventCalendar } from './services/calendar.service';
 
-const redisClient = RedisClient.getClient();
 const PORT = config.PORT || 3031;
 const app = express();
 const validator = new ValidatorService();
-const cacheService = new CacheService(redisClient);
+const cacheService = new NoOpCache();
 const eventDetailsService = new EventService(cacheService);
 const appointmentService = new AppointmentService(validator, cacheService, eventDetailsService);
 appointmentService.clearAvailableAppointmentFromCache();
@@ -88,11 +86,4 @@ app.use(ErrorHandler);
 
 app.listen(PORT, async () => {
   console.log('server up on port ' + PORT);
-  await connectToDb();
-  try {
-    await redisClient.connect();
-    console.log('connected to redis');
-  } catch (error) {
-    redisClient.disconnect();
-  }
 });

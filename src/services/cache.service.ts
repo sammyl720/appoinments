@@ -1,6 +1,20 @@
 import { RedisClient } from "../db/database";
 import { ICache } from "../types/cache.interface";
 
+export class NoOpCache implements ICache {
+  get(key: string) {
+    return Promise.resolve(null);
+  }
+
+  set(key: string, value: string) {
+    return Promise.resolve(null);
+  }
+
+  del(key: string) {
+    return Promise.resolve(0);
+  }
+}
+
 export class CacheService implements ICache {
 
   constructor(private cacheClient: ICache, private disable = process.env.ENABLE_CACHE !== 'true') {
