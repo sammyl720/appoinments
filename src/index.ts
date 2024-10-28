@@ -1,7 +1,8 @@
 import getAppointmentRouter from './routes/appointments.route';
 import AppointmentService from './services/appointment.service';
 import ValidatorService from './services/vailidator.service';
-import express, { ErrorRequestHandler } from 'express'
+import express, { ErrorRequestHandler } from 'express';
+import connectToDb from './db/database';
 import cors from 'cors';
 import { config, getTransportConfig } from './config';
 import { TemplateService } from './services/template.service';
@@ -86,4 +87,5 @@ app.use(ErrorHandler);
 
 app.listen(PORT, async () => {
   console.log('server up on port ' + PORT);
+  await connectToDb();
 });
