@@ -10,7 +10,6 @@ export class NodeCacheAdapter implements ICache {
   
     async get(key: string): Promise<string | null> {
       const value = this.cache.get<string>(key);
-      console.log(`Key (${key}), Value: ${value}`)
       return value ?? null;
     }
   
