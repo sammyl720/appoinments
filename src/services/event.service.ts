@@ -1,6 +1,5 @@
 import { ICache } from "../types/cache.interface";
-import { config } from "../config/config";
-import { IEventDetails, IEventListener, IEventService } from "../types/event-details";
+import { IEventListener, IEventService } from "../types/event-details";
 import { IEventData } from "../models/interfaces";
 import LocationModel from '../models/location';
 import EventModel from '../models/event';
@@ -30,7 +29,7 @@ export class EventService implements IEventService {
     let cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - 1);
 
-    if (cachedEvent) {
+    if (!!cachedEvent) {
       const event = JSON.parse(cachedEvent) as IEventData;
       if (new Date(event.date) > cutoffDate) {
         return event;
