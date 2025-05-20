@@ -1,5 +1,12 @@
 import Appointment from "../models/appointment";
-import { AvailableAppointments, AvailableTimeSlot, IAppointmentService, TimePoint, TIME_SLOT, Validator } from "../types";
+import {
+  AvailableAppointments,
+  AvailableTimeSlot,
+  IAppointmentService,
+  TimePoint,
+  TIME_SLOT,
+  Validator,
+} from "../types";
 import { CreateAppointmentDTO, UserDTO } from "../dtos/appointment.dto";
 import { config } from "../config";
 import TimeSlot from "../models/TimeSlot";
@@ -14,14 +21,16 @@ import { getDateTime } from "../utils";
 import { ObjectID } from "bson";
 
 export enum AppointmentStatus {
-  Created = 'created',
-  Updated = 'updated',
-  Canceled = 'canceled'
+  Created = "created",
+  Updated = "updated",
+  Canceled = "canceled",
 }
 
-const AVAILABLE_APPOINTMENTS_KEY = 'OPEN_APPOINTMENTS_KEY';
+const AVAILABLE_APPOINTMENTS_KEY = "OPEN_APPOINTMENTS_KEY";
 const CACHE_EXPIRATION = 10 * 60;
-export default class AppointmentService implements IAppointmentService, IEventListener {
+export default class AppointmentService
+  implements IAppointmentService, IEventListener
+{
   private nextEvent: IEventData | null = null;
   constructor(
     private validator: Validator,
@@ -29,34 +38,41 @@ export default class AppointmentService implements IAppointmentService, IEventLi
     private eventService: IEventService,
     private logger: ILogger = new Logger()
   ) {
-    eventService.getNextEvent().then(event => {
-      this.nextEvent = event;
-    }).catch(console.error);
+    eventService
+      .getNextEvent()
+      .then((event) => {
+        this.nextEvent = event;
+      })
+      .catch(console.error);
   }
 
   onUpdate(event: IEventData) {
     this.nextEvent = event;
   }
 
-  async CreateUserAppointment(appointment: CreateAppointmentDTO): Promise<IAppointment> {
-    const userCanCreateAppointment = await this.canCreateAppointment(appointment);
+  async CreateUserAppointment(
+    appointment: CreateAppointmentDTO
+  ): Promise<IAppointment> {
+    const userCanCreateAppointment = await this.canCreateAppointment(
+      appointment
+    );
     const slotOpen = await this.isTimeslotAvailable(appointment.time);
     if (!userCanCreateAppointment || !slotOpen) {
-      const errorReason = !userCanCreateAppointment ? ErrorType.UserAlreadyHasAppointment : ErrorType.AppointmentTimeAlreadyFull;
-      throw new CustomError(`Could not create appointment for`, errorReason, 400);
+      const errorReason = !userCanCreateAppointment
+        ? ErrorType.UserAlreadyHasAppointment
+        : ErrorType.AppointmentTimeAlreadyFull;
+      throw new CustomError(
+        `Could not create appointment for`,
+        errorReason,
+        400
+      );
     }
     const date = getDateTime(this.getDateForEvent(), appointment.time);
     console.log(`Date for appointment (${appointment.time}): ${date}`);
-    const {
-      firstName,
-      lastName,
-      email,
-      phone,
-      time
-    } = appointment;
+    const { firstName, lastName, email, phone, time } = appointment;
     const timeslot = new TimeSlot({
       time: time,
-      date
+      date,
     });
 
     await timeslot.save();
@@ -68,22 +84,32 @@ export default class AppointmentService implements IAppointmentService, IEventLi
       phone,
       date,
       timeslot,
-      event: this.event._id
+      event: this.event._id,
     });
 
-    await (await createdAppointment.save()).populate('event timeslot');
-    this.cacheClient.set((createdAppointment._id as ObjectID).toString(), JSON.stringify(createdAppointment));
-    this.logAppointmentStatus((createdAppointment as unknown) as IAppointment, AppointmentStatus.Created);
+    await (await createdAppointment.save()).populate("event timeslot");
+    this.cacheClient.set(
+      (createdAppointment._id as ObjectID).toString(),
+      JSON.stringify(createdAppointment)
+    );
+    this.logAppointmentStatus(
+      createdAppointment as unknown as IAppointment,
+      AppointmentStatus.Created
+    );
     this.clearAvailableAppointmentFromCache();
-    return (createdAppointment as unknown) as IAppointment;
+    return createdAppointment as unknown as IAppointment;
   }
 
   async clearAvailableAppointmentFromCache() {
-    await this.cacheClient.del(AVAILABLE_APPOINTMENTS_KEY)
+    await this.cacheClient.del(AVAILABLE_APPOINTMENTS_KEY);
   }
   async GetAllFilledAppointments() {
+    // possible 'event not set' error should be handled by caller
+    const eventId = this.event._id;
     try {
-      const allAppointments = await Appointment.find({ event: this.event._id }).populate('timeslot');
+      const allAppointments = await Appointment.find({
+        event: eventId,
+      }).populate("timeslot");
 
       return allAppointments as IAppointment[];
     } catch (error) {
@@ -95,7 +121,7 @@ export default class AppointmentService implements IAppointmentService, IEventLi
   async GetAppointmentById(id: string) {
     const cachedAppointment = await this.cacheClient.get(id);
     if (!!cachedAppointment) {
-      console.log('retrieving appointment from cache ', id);
+      console.log("retrieving appointment from cache ", id);
       return JSON.parse(cachedAppointment) as IAppointment;
     }
 
@@ -104,9 +130,15 @@ export default class AppointmentService implements IAppointmentService, IEventLi
   }
 
   private async findById(id: string) {
-    const appointment: IAppointment | null = await Appointment.findById(id).populate('timeslot event');
+    const appointment: IAppointment | null = await Appointment.findById(
+      id
+    ).populate("timeslot event");
     if (!appointment) {
-      throw new CustomError(`Appointment with id ${id}`, ErrorType.AppointmentNotFound, 404);
+      throw new CustomError(
+        `Appointment with id ${id}`,
+        ErrorType.AppointmentNotFound,
+        404
+      );
     }
     return appointment;
   }
@@ -114,12 +146,20 @@ export default class AppointmentService implements IAppointmentService, IEventLi
   async UpdateAppointmentTime(id: string, updatedAppointTime: TIME_SLOT) {
     const userAppointment = await this.GetAppointmentById(id);
     if (!userAppointment) {
-      throw new CustomError('Could not find appointment with id: ' + id, ErrorType.AppointmentNotFound, 404);
+      throw new CustomError(
+        "Could not find appointment with id: " + id,
+        ErrorType.AppointmentNotFound,
+        404
+      );
     }
     if (updatedAppointTime != userAppointment.timeslot?.time) {
-      const timeSlotIsAvaliable = await this.isTimeslotAvailable(updatedAppointTime);
+      const timeSlotIsAvaliable = await this.isTimeslotAvailable(
+        updatedAppointTime
+      );
       if (!timeSlotIsAvaliable) {
-        throw new Error('There are no appointments available for ' + updatedAppointTime);
+        throw new Error(
+          "There are no appointments available for " + updatedAppointTime
+        );
       }
 
       this.clearTimeSlot(userAppointment.timeslot?._id?.toString());
@@ -133,15 +173,19 @@ export default class AppointmentService implements IAppointmentService, IEventLi
       this.updateAppointmentInCache(id, updatedAppointment);
       this.clearAvailableAppointmentFromCache();
       return updatedAppointment;
-    }
-    else {
-      throw new CustomError("Please specify a new time for appoinment", ErrorType.AppointmentNotFound, 422);
+    } else {
+      throw new CustomError(
+        "Please specify a new time for appoinment",
+        ErrorType.AppointmentNotFound,
+        422
+      );
     }
   }
 
-
-
-  private updateAppointmentInCache(id: string, updatedAppointment: IAppointment) {
+  private updateAppointmentInCache(
+    id: string,
+    updatedAppointment: IAppointment
+  ) {
     this.cacheClient.set(id, JSON.stringify(updatedAppointment));
     this.cacheClient.del(AVAILABLE_APPOINTMENTS_KEY);
   }
@@ -152,7 +196,11 @@ export default class AppointmentService implements IAppointmentService, IEventLi
     const { firstName, lastName, timeslot } = appoinment;
     const wasDeleted = await Appointment.findByIdAndDelete(id);
     if (!wasDeleted) {
-      throw new CustomError('Could not delete appointment with id ' + id, ErrorType.AppointmentNotFound, 404)
+      throw new CustomError(
+        "Could not delete appointment with id " + id,
+        ErrorType.AppointmentNotFound,
+        404
+      );
     }
     this.clearTimeSlot(appoinment.timeslot?._id?.toString());
     this.deleteAppointmentFromCache(id);
@@ -174,7 +222,11 @@ export default class AppointmentService implements IAppointmentService, IEventLi
       // }
 
       const availableAppointments = await this.getAvailableAppointmentsFromDb();
-      this.cacheClient.setWithExpiration?.(AVAILABLE_APPOINTMENTS_KEY, JSON.stringify(availableAppointments), CACHE_EXPIRATION);
+      this.cacheClient.setWithExpiration?.(
+        AVAILABLE_APPOINTMENTS_KEY,
+        JSON.stringify(availableAppointments),
+        CACHE_EXPIRATION
+      );
       return availableAppointments;
     } catch (error) {
       console.error(error);
@@ -182,11 +234,10 @@ export default class AppointmentService implements IAppointmentService, IEventLi
 
     const availableAppointments: AvailableAppointments = {
       appointmentsLeft: 0,
-      slots: []
-    }
+      slots: [],
+    };
     return availableAppointments;
-
-  };
+  }
 
   private async clearTimeSlot(timeSlotId?: string) {
     const wasDeleted = await TimeSlot.findByIdAndDelete(timeSlotId);
@@ -199,28 +250,33 @@ export default class AppointmentService implements IAppointmentService, IEventLi
     let slotsLeft = 0;
 
     for (let slot of allSlots) {
-      const appointmentLeftForSlot = await this.getAppointmentsAvailableForSlot(slot);
+      const appointmentLeftForSlot = await this.getAppointmentsAvailableForSlot(
+        slot
+      );
       slotsLeft += appointmentLeftForSlot;
       if (!!appointmentLeftForSlot) {
         avaliableSlots.push({
           time: slot,
-          available: appointmentLeftForSlot
+          available: appointmentLeftForSlot,
         });
       }
     }
 
     return {
       appointmentsLeft: slotsLeft,
-      slots: avaliableSlots
+      slots: avaliableSlots,
     };
   }
 
   private async GetUserAppoinment(user: UserDTO): Promise<IAppointment | null> {
     try {
       const date = await this.getDateForEvent();
-      const dbUser = await Appointment.findOne({ email: user.email.toLowerCase(), date });
+      const dbUser = await Appointment.findOne({
+        email: user.email.toLowerCase(),
+        date,
+      });
       console.log(dbUser);
-      return (dbUser as unknown) as IAppointment | null;
+      return dbUser as unknown as IAppointment | null;
     } catch (error) {
       console.log(error);
       return null;
@@ -229,8 +285,12 @@ export default class AppointmentService implements IAppointmentService, IEventLi
 
   private async getAppointmentsAvailableForSlot(time: TIME_SLOT) {
     try {
-      const appointmentsReservedForSlot = await this.getCountOfAppointmentFilledForSlot(time);
-      return Math.max(0, this.getAppointmentPerTimeSlot() - appointmentsReservedForSlot);
+      const appointmentsReservedForSlot =
+        await this.getCountOfAppointmentFilledForSlot(time);
+      return Math.max(
+        0,
+        this.getAppointmentPerTimeSlot() - appointmentsReservedForSlot
+      );
     } catch (error) {
       console.error(error);
       return 0;
@@ -239,7 +299,9 @@ export default class AppointmentService implements IAppointmentService, IEventLi
 
   private async isTimeslotAvailable(time: TIME_SLOT) {
     try {
-      const appointmentsFilled = await this.getCountOfAppointmentFilledForSlot(time);
+      const appointmentsFilled = await this.getCountOfAppointmentFilledForSlot(
+        time
+      );
       return this.getAppointmentPerTimeSlot() > appointmentsFilled;
     } catch (error) {
       console.error(error);
@@ -248,38 +310,52 @@ export default class AppointmentService implements IAppointmentService, IEventLi
   }
 
   private async getCountOfAppointmentFilledForSlot(time: TIME_SLOT) {
-    const date = getDateTime(this.getDateForEvent(), time)
-    const appointmentsReservedForSlot = await TimeSlot.countDocuments({ time, date });
+    const date = getDateTime(this.getDateForEvent(), time);
+    const appointmentsReservedForSlot = await TimeSlot.countDocuments({
+      time,
+      date,
+    });
     return appointmentsReservedForSlot;
   }
 
   private getStartTimePoint() {
-    return this.getTimePoint(this.event.startingTime ?? '2:30');
+    return this.getTimePoint(this.event.startingTime ?? "2:30");
   }
 
   private getEndTimePoint() {
-    return this.getTimePoint(this.event.endingTime ?? '9:30');
+    return this.getTimePoint(this.event.endingTime ?? "9:30");
   }
 
   private getTimePoint(time: string) {
     const timeRgx = time?.match(TIME_RXG);
     if (!timeRgx) {
-      throw new Error('Invalid start time');
+      throw new Error("Invalid start time");
     }
-    return (timeRgx.groups as unknown) as TimePoint;
+    return timeRgx.groups as unknown as TimePoint;
   }
 
   private GetAllPossibleAppointments() {
     const { hour: hourStart, minute: minuteStart } = this.getStartTimePoint();
     const { hour: hourEnd, minute: minuteEnd } = this.getEndTimePoint();
-    const quarters = ['00', '15', '30', '45'];
+    const quarters = ["00", "15", "30", "45"];
     const slots: TIME_SLOT[] = [];
 
-    for (let currentHour = parseInt(hourStart); currentHour <= parseInt(hourEnd); currentHour++) {
-      const startIntervalIndex = currentHour == parseInt(hourStart) ? quarters.indexOf(minuteStart) : 0;
-      const endIntervalIndex = currentHour == parseInt(hourEnd) ? quarters.indexOf(minuteEnd) : 3;
-      for (let currentInterval = startIntervalIndex; currentInterval <= endIntervalIndex; currentInterval++) {
-        const timeSlot: TIME_SLOT = `${currentHour}:${quarters[currentInterval]}PM` as TIME_SLOT;
+    for (
+      let currentHour = parseInt(hourStart);
+      currentHour <= parseInt(hourEnd);
+      currentHour++
+    ) {
+      const startIntervalIndex =
+        currentHour == parseInt(hourStart) ? quarters.indexOf(minuteStart) : 0;
+      const endIntervalIndex =
+        currentHour == parseInt(hourEnd) ? quarters.indexOf(minuteEnd) : 3;
+      for (
+        let currentInterval = startIntervalIndex;
+        currentInterval <= endIntervalIndex;
+        currentInterval++
+      ) {
+        const timeSlot: TIME_SLOT =
+          `${currentHour}:${quarters[currentInterval]}PM` as TIME_SLOT;
         slots.push(timeSlot);
       }
     }
@@ -310,7 +386,9 @@ export default class AppointmentService implements IAppointmentService, IEventLi
   }
 
   private getAppointPerHour() {
-    return this.getAppointmentPeriodsPerHour() * this.getAppointmentPerTimeSlot();
+    return (
+      this.getAppointmentPeriodsPerHour() * this.getAppointmentPerTimeSlot()
+    );
   }
 
   private getAppointmentPeriodsPerHour() {
@@ -321,10 +399,17 @@ export default class AppointmentService implements IAppointmentService, IEventLi
     return this.event.date;
   }
 
-  private async logAppointmentStatus(appointment: IAppointment, status: AppointmentStatus) {
+  private async logAppointmentStatus(
+    appointment: IAppointment,
+    status: AppointmentStatus
+  ) {
     const { firstName, lastName, timeslot } = appointment;
-    console.log('Has valid date:', timeslot.date);
-    this.logger.log(`Appointment ${status} for ${firstName + ' ' + lastName} at ${timeslot.time} on ${timeslot.date?.toString?.() ?? timeslot.date}`);
+    console.log("Has valid date:", timeslot.date);
+    this.logger.log(
+      `Appointment ${status} for ${firstName + " " + lastName} at ${
+        timeslot.time
+      } on ${timeslot.date?.toString?.() ?? timeslot.date}`
+    );
   }
 
   public getEventInfo() {
@@ -333,7 +418,7 @@ export default class AppointmentService implements IAppointmentService, IEventLi
 
   get event() {
     if (!this.nextEvent) {
-      throw new CustomError('Event not set', ErrorType.EventNotSet, 500);
+      throw new CustomError("Event not set", ErrorType.EventNotSet, 500);
     }
 
     return this.nextEvent;
