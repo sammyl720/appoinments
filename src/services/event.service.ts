@@ -43,6 +43,8 @@ export class EventService implements IEventService {
       },
     }).populate("location");
 
+    if (!event) return null;
+
     this.cache.setWithExpiration?.(
       CACHE_KEY,
       JSON.stringify(event),
