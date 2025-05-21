@@ -27,12 +27,14 @@ export class EventService implements IEventService {
     let cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - 1);
 
-    if (!!cachedEvent) {
+    if (cachedEvent) {
       console.table(`Cached event: ${cachedEvent}`);
       const event = JSON.parse(cachedEvent) as IEventData;
       if (new Date(event.date) > cutoffDate) {
         return event;
       }
+    } else {
+      console.log("no cached event");
     }
 
     const event = await EventModel.findOne({
