@@ -28,13 +28,10 @@ export class EventService implements IEventService {
     cutoffDate.setDate(cutoffDate.getDate() - 1);
 
     if (cachedEvent) {
-      console.table(`Cached event: ${cachedEvent}`);
       const event = JSON.parse(cachedEvent) as IEventData;
       if (new Date(event.date) > cutoffDate) {
         return event;
       }
-    } else {
-      console.log("no cached event");
     }
 
     const event = await EventModel.findOne({
@@ -54,7 +51,6 @@ export class EventService implements IEventService {
   }
 
   async createEvent(event: IEventData) {
-    console.table(event);
     const nextEvent = await this.getNextEvent();
     if (!!nextEvent) {
       throw new CustomError(
@@ -72,14 +68,12 @@ export class EventService implements IEventService {
       await location.save();
     }
 
-    console.log(`Retrieving event time: ${event?.date ?? "no date"}`);
     const date = getDateTime(event.date, event.startingTime);
     const dbEvent = new EventModel({
       ...event,
       date,
       location,
     });
-    console.log(`retrieved event time: ${date ?? "no"}`);
 
     await dbEvent.save();
 
