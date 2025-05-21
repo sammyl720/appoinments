@@ -68,12 +68,14 @@ export class EventService implements IEventService {
       await location.save();
     }
 
+    console.log(`Retrieving event time: ${event?.date ?? "no date"}`);
     const date = getDateTime(event.date, event.startingTime);
     const dbEvent = new EventModel({
       ...event,
       date,
       location,
     });
+    console.log(`retrieved event time: ${date ?? "no"}`);
 
     await dbEvent.save();
 
