@@ -1,10 +1,12 @@
 export interface ITransportConfig {
   host: string;
+  port?: number;
+  secure?: boolean;
   auth: {
     user: string;
     pass: string;
-  }
-};
+  };
+}
 
 export interface IMessageResult {
   accepted: boolean;
@@ -24,9 +26,9 @@ export interface MailMessageInfo {
   subject: string;
   text: string;
   html?: string;
-  attachments?: IMailAttachment[]
+  attachments?: IMailAttachment[];
 }
 
 export interface IMailer {
-  sendEmail: (message: MailMessageInfo) => Promise<IMessageResult>
+  sendEmail: (message: MailMessageInfo) => Promise<IMessageResult>;
 }
