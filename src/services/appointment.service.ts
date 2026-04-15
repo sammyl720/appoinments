@@ -18,7 +18,6 @@ import { EventService } from "./event.service";
 import { IEventListener, IEventService } from "../types/event-details";
 import { ILogger, Logger } from "./logger.service";
 import { getDateTime } from "../utils";
-import { ObjectID } from "bson";
 
 export enum AppointmentStatus {
   Created = "created",
@@ -37,14 +36,7 @@ export default class AppointmentService
     private cacheClient: ICache,
     private eventService: IEventService,
     private logger: ILogger = new Logger()
-  ) {
-    eventService
-      .getNextEvent()
-      .then((event) => {
-        this.nextEvent = event;
-      })
-      .catch(console.error);
-  }
+  ) {}
 
   onUpdate(event: IEventData) {
     this.nextEvent = event;
@@ -53,6 +45,7 @@ export default class AppointmentService
   async CreateUserAppointment(
     appointment: CreateAppointmentDTO
   ): Promise<IAppointment> {
+    await this.ensureEventSet();
     const userCanCreateAppointment = await this.canCreateAppointment(
       appointment
     );
@@ -89,7 +82,7 @@ export default class AppointmentService
 
     await (await createdAppointment.save()).populate("event timeslot");
     this.cacheClient.set(
-      (createdAppointment._id as ObjectID).toString(),
+      createdAppointment._id?.toString(),
       JSON.stringify(createdAppointment)
     );
     this.logAppointmentStatus(
@@ -104,6 +97,7 @@ export default class AppointmentService
     await this.cacheClient.del(AVAILABLE_APPOINTMENTS_KEY);
   }
   async GetAllFilledAppointments() {
+    await this.ensureEventSet();
     // possible 'event not set' error should be handled by caller
     const eventId = this.event._id;
     try {
@@ -144,6 +138,7 @@ export default class AppointmentService
   }
 
   async UpdateAppointmentTime(id: string, updatedAppointTime: TIME_SLOT) {
+    await this.ensureEventSet();
     const userAppointment = await this.GetAppointmentById(id);
     if (!userAppointment) {
       throw new CustomError(
@@ -215,6 +210,7 @@ export default class AppointmentService
   }
   async GetAllAvailableAppointments() {
     try {
+      await this.ensureEventSet();
       // const cachedAvaibleAppointments = await this.cacheClient.get(AVAILABLE_APPOINTMENTS_KEY);
 
       // if (!!cachedAvaibleAppointments) {
@@ -229,6 +225,12 @@ export default class AppointmentService
       );
       return availableAppointments;
     } catch (error) {
+      if (error instanceof CustomError && error.reason === ErrorType.EventNotSet) {
+        return {
+          appointmentsLeft: 0,
+          slots: [],
+        };
+      }
       console.error(error);
     }
 
@@ -414,6 +416,20 @@ export default class AppointmentService
 
   public getEventInfo() {
     return this.event;
+  }
+
+  private async ensureEventSet() {
+    if (this.nextEvent) {
+      return;
+    }
+
+    const event = await this.eventService.getNextEvent();
+
+    if (!event) {
+      throw new CustomError("Event not set", ErrorType.EventNotSet, 404);
+    }
+
+    this.nextEvent = event;
   }
 
   get event() {

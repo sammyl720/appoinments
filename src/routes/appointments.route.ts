@@ -3,7 +3,7 @@ import { Router, Request, Response } from 'express';
 import { CreateAppointmentDTO, UpdateAppointmentDTO } from '@dtos/appointment.dto';
 import { getFullValidatorHandler, getTimeValidatorHandler } from '../middleware/appointment';
 import ValidatorService from '../services/vailidator.service';
-import { CustomError } from '../types/errors';
+import { CustomError, ErrorType } from '../types/errors';
 import { IMailer, ITemplateService, MailMessageInfo } from '../types';
 import { config } from '../config';
 import { IAppointment } from '../models/interfaces';
@@ -22,8 +22,18 @@ function getAppointmentRouter(
 ) {
   const appointmentRouter = Router();
   appointmentRouter.get('/', async (req: Request, res: Response) => {
-    const availableAppointments = await appointmentService.GetAllAvailableAppointments();
-    return res.json(availableAppointments);
+    try {
+      const availableAppointments = await appointmentService.GetAllAvailableAppointments();
+      return res.json(availableAppointments);
+    } catch (error) {
+      if (error instanceof CustomError && error.reason === ErrorType.EventNotSet) {
+        return res.status(200).json({
+          appointmentsLeft: 0,
+          slots: []
+        });
+      }
+      return handleError(res, error);
+    }
   });
 
   appointmentRouter.post('/', getFullValidatorHandler(validator), async (req: Request, res: Response) => {
