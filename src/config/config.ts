@@ -13,6 +13,12 @@ const {
   CLIENT_URL,
   NODE_ENV,
   EMAIL_HOST,
+  EMAIL_PORT,
+  EMAIL_SECURE,
+  EMAIL_REQUIRE_TLS,
+  EMAIL_CONNECTION_TIMEOUT_MS,
+  EMAIL_GREETING_TIMEOUT_MS,
+  EMAIL_SOCKET_TIMEOUT_MS,
   EMAIL,
   PASSWORD,
   // KEY,
@@ -36,10 +42,44 @@ export const getTransportConfig = (): ITransportConfig => {
       "Email can not be sent!\nPlease make sure the relevant enviroment variable are set",
     );
   }
+
+  const normalizeEnvValue = (value?: string) => {
+    if (typeof value !== "string") {
+      return undefined;
+    }
+
+    const normalized = value.trim().replace(/^["']|["']$/g, "");
+    return normalized.length ? normalized : undefined;
+  };
+
+  const parseNumberEnv = (value: string | undefined, fallback: number) => {
+    const normalized = normalizeEnvValue(value);
+    const parsedNumber = Number(normalized);
+    return Number.isFinite(parsedNumber) ? parsedNumber : fallback;
+  };
+
+  const parseBooleanEnv = (value: string | undefined) => {
+    const normalizedValue = normalizeEnvValue(value)?.toLowerCase();
+    return normalizedValue === "true";
+  };
+
+  const smtpPort = parseNumberEnv(EMAIL_PORT, 465);
+  const smtpSecure = EMAIL_SECURE
+    ? parseBooleanEnv(EMAIL_SECURE)
+    : smtpPort === 465;
+  const requireTLS = parseBooleanEnv(EMAIL_REQUIRE_TLS);
+  const connectionTimeout = parseNumberEnv(EMAIL_CONNECTION_TIMEOUT_MS, 10000);
+  const greetingTimeout = parseNumberEnv(EMAIL_GREETING_TIMEOUT_MS, 10000);
+  const socketTimeout = parseNumberEnv(EMAIL_SOCKET_TIMEOUT_MS, 20000);
+
   return {
     host: EMAIL_HOST,
-    port: 465,
-    secure: true,
+    port: smtpPort,
+    secure: smtpSecure,
+    requireTLS,
+    connectionTimeout,
+    greetingTimeout,
+    socketTimeout,
     auth: {
       user: EMAIL,
       pass: PASSWORD,
