@@ -24,6 +24,7 @@ const validator = new ValidatorService();
 const cacheService = new NodeCacheAdapter(600);
 const eventDetailsService = new EventService(cacheService);
 const appointmentService = new AppointmentService(validator, cacheService, eventDetailsService);
+eventDetailsService.addEventListener(appointmentService);
 appointmentService.clearAvailableAppointmentFromCache();
 const templateService = new TemplateService();
 const calGenerator = new EventCalendar();

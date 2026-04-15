@@ -11,14 +11,18 @@ export class MailerService implements IMailer {
     );
 
     this.transport = mailer.createTransport(transportConfig);
-    this.transport.verify().then(() => {
-      console.log('Mail Transport online');
-    }).catch(reason => {
-      console.log(
-        reason,
-        ` mailer could not start (host=${transportConfig.host}, port=${transportConfig.port}, secure=${transportConfig.secure})`,
-      );
-    })
+    const shouldVerifyOnStartup =
+      (process.env.EMAIL_VERIFY_ON_STARTUP ?? "false").toLowerCase() === "true";
+
+    if (shouldVerifyOnStartup) {
+      this.transport.verify().then(() => {
+        console.log('Mail Transport online');
+      }).catch(reason => {
+        console.warn(
+          `mailer could not start (host=${transportConfig.host}, port=${transportConfig.port}, secure=${transportConfig.secure}, code=${reason?.code ?? "unknown"})`,
+        );
+      });
+    }
   }
 
   async sendEmail(message: MailMessageInfo): Promise<IMessageResult> {
