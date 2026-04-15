@@ -81,8 +81,9 @@ export default class AppointmentService
     });
 
     await (await createdAppointment.save()).populate("event timeslot");
+    const appointmentId = String(createdAppointment._id);
     this.cacheClient.set(
-      createdAppointment._id?.toString(),
+      appointmentId,
       JSON.stringify(createdAppointment)
     );
     this.logAppointmentStatus(
