@@ -59,6 +59,17 @@ export const getTransportConfig = (): ITransportConfig => {
     return Number.isFinite(parsedNumber) ? parsedNumber : fallback;
   };
 
+  const parseOptionalNumberEnv = (value: string | undefined) => {
+    const normalized = normalizeEnvValue(value);
+
+    if (!normalized) {
+      return undefined;
+    }
+
+    const parsedNumber = Number(normalized);
+    return Number.isFinite(parsedNumber) ? parsedNumber : undefined;
+  };
+
   const parseBooleanEnv = (value: string | undefined) => {
     const normalizedValue = normalizeEnvValue(value)?.toLowerCase();
     return normalizedValue === "true";
@@ -69,9 +80,9 @@ export const getTransportConfig = (): ITransportConfig => {
     ? parseBooleanEnv(emailSecure)
     : smtpPort === 465;
   const requireTLS = parseBooleanEnv(emailRequireTLS);
-  const connectionTimeout = parseNumberEnv(emailConnectionTimeout, 10000);
-  const greetingTimeout = parseNumberEnv(emailGreetingTimeout, 10000);
-  const socketTimeout = parseNumberEnv(emailSocketTimeout, 20000);
+  const connectionTimeout = parseOptionalNumberEnv(emailConnectionTimeout);
+  const greetingTimeout = parseOptionalNumberEnv(emailGreetingTimeout);
+  const socketTimeout = parseOptionalNumberEnv(emailSocketTimeout);
 
   if (!emailPort) {
     console.warn("EMAIL_PORT/SMTP_PORT is not set. Falling back to default SMTP port 465.");
@@ -81,6 +92,18 @@ export const getTransportConfig = (): ITransportConfig => {
     console.warn(
       "EMAIL_SECURE/SMTP_SECURE is not set. Deriving secure mode from selected port.",
     );
+  }
+
+  if (emailConnectionTimeout && connectionTimeout === undefined) {
+    console.warn("EMAIL_CONNECTION_TIMEOUT_MS is invalid and will be ignored.");
+  }
+
+  if (emailGreetingTimeout && greetingTimeout === undefined) {
+    console.warn("EMAIL_GREETING_TIMEOUT_MS is invalid and will be ignored.");
+  }
+
+  if (emailSocketTimeout && socketTimeout === undefined) {
+    console.warn("EMAIL_SOCKET_TIMEOUT_MS is invalid and will be ignored.");
   }
 
   return {
