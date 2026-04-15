@@ -55,7 +55,8 @@ export class EventService implements IEventService {
     if (!!nextEvent) {
       throw new CustomError(
         "Only one event is allowed at a time",
-        ErrorType.EventAlreadyExists
+        ErrorType.EventAlreadyExists,
+        409
       );
     }
 

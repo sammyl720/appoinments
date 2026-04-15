@@ -53,6 +53,10 @@ function getAdminRouter(
             .json({ message: "Make sure all fields are correctly filled" });
         }
       } catch (error) {
+        if (error instanceof CustomError) {
+          return res.status(error.statusCode).json(error.toJson());
+        }
+
         console.error(error);
         return res.status(500).json({ error });
       }
