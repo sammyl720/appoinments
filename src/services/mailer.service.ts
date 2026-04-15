@@ -6,6 +6,10 @@ export class MailerService implements IMailer {
   private transport: mailer.Transporter<SMTPTransport.SentMessageInfo>;
 
   constructor(transportConfig: ITransportConfig) {
+    console.log(
+      `Mail transport config: host=${transportConfig.host}, port=${transportConfig.port}, secure=${transportConfig.secure}, requireTLS=${transportConfig.requireTLS}`,
+    );
+
     this.transport = mailer.createTransport(transportConfig);
     this.transport.verify().then(() => {
       console.log('Mail Transport online');

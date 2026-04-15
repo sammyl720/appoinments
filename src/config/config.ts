@@ -43,23 +43,43 @@ export const getTransportConfig = (): ITransportConfig => {
     );
   }
 
-  const smtpPort = Number(EMAIL_PORT ?? 465);
-  const smtpSecure = EMAIL_SECURE ? EMAIL_SECURE === "true" : smtpPort === 465;
-  const requireTLS = EMAIL_REQUIRE_TLS === "true";
-  const connectionTimeout = Number(EMAIL_CONNECTION_TIMEOUT_MS ?? 10000);
-  const greetingTimeout = Number(EMAIL_GREETING_TIMEOUT_MS ?? 10000);
-  const socketTimeout = Number(EMAIL_SOCKET_TIMEOUT_MS ?? 20000);
+  const normalizeEnvValue = (value?: string) => {
+    if (typeof value !== "string") {
+      return undefined;
+    }
+
+    const normalized = value.trim().replace(/^["']|["']$/g, "");
+    return normalized.length ? normalized : undefined;
+  };
+
+  const parseNumberEnv = (value: string | undefined, fallback: number) => {
+    const normalized = normalizeEnvValue(value);
+    const parsedNumber = Number(normalized);
+    return Number.isFinite(parsedNumber) ? parsedNumber : fallback;
+  };
+
+  const parseBooleanEnv = (value: string | undefined) => {
+    const normalizedValue = normalizeEnvValue(value)?.toLowerCase();
+    return normalizedValue === "true";
+  };
+
+  const smtpPort = parseNumberEnv(EMAIL_PORT, 465);
+  const smtpSecure = EMAIL_SECURE
+    ? parseBooleanEnv(EMAIL_SECURE)
+    : smtpPort === 465;
+  const requireTLS = parseBooleanEnv(EMAIL_REQUIRE_TLS);
+  const connectionTimeout = parseNumberEnv(EMAIL_CONNECTION_TIMEOUT_MS, 10000);
+  const greetingTimeout = parseNumberEnv(EMAIL_GREETING_TIMEOUT_MS, 10000);
+  const socketTimeout = parseNumberEnv(EMAIL_SOCKET_TIMEOUT_MS, 20000);
 
   return {
     host: EMAIL_HOST,
-    port: Number.isFinite(smtpPort) ? smtpPort : 465,
+    port: smtpPort,
     secure: smtpSecure,
     requireTLS,
-    connectionTimeout: Number.isFinite(connectionTimeout)
-      ? connectionTimeout
-      : 10000,
-    greetingTimeout: Number.isFinite(greetingTimeout) ? greetingTimeout : 10000,
-    socketTimeout: Number.isFinite(socketTimeout) ? socketTimeout : 20000,
+    connectionTimeout,
+    greetingTimeout,
+    socketTimeout,
     auth: {
       user: EMAIL,
       pass: PASSWORD,
