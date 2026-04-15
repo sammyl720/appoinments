@@ -2,6 +2,10 @@ export interface ITransportConfig {
   host: string;
   port?: number;
   secure?: boolean;
+  requireTLS?: boolean;
+  connectionTimeout?: number;
+  greetingTimeout?: number;
+  socketTimeout?: number;
   auth: {
     user: string;
     pass: string;
