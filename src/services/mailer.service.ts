@@ -1,47 +1,41 @@
 import { IMailer, IMailerConfig, IMessageResult, MailMessageInfo } from '../types';
+import { Resend } from 'resend';
 
 export class MailerService implements IMailer {
   private readonly mailerConfig: IMailerConfig;
+  private readonly resendClient: Resend;
 
   constructor(mailerConfig: IMailerConfig) {
     this.mailerConfig = mailerConfig;
+    this.resendClient = new Resend(mailerConfig.apiKey);
     console.log(`Mail provider config: provider=resend, from=${mailerConfig.fromEmail}`);
   }
 
   async sendEmail(message: MailMessageInfo): Promise<IMessageResult> {
     try {
-      const response = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${this.mailerConfig.apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: message.from || this.mailerConfig.fromEmail,
-          to: [message.to],
-          subject: message.subject,
-          text: message.text,
-          html: message.html,
-          attachments: message.attachments?.map((attachment) => ({
-            filename: attachment.filename,
-            content: Buffer.from(attachment.content).toString('base64'),
-          })),
-        }),
+      const payload = await this.resendClient.emails.send({
+        from: message.from || this.mailerConfig.fromEmail,
+        to: [message.to],
+        subject: message.subject,
+        text: message.text,
+        html: message.html,
+        attachments: message.attachments?.map((attachment) => ({
+          filename: attachment.filename,
+          content: attachment.content,
+        })),
       });
 
-      const payload = await response.json() as { id?: string; message?: string; name?: string };
-
-      if (!response.ok || !payload?.id) {
-        throw new Error(payload?.message || payload?.name || `Resend API request failed with status ${response.status}`);
+      if (payload.error || !payload.data?.id) {
+        throw new Error(payload.error?.message || 'Resend API request failed');
       }
 
       return {
         accepted: true,
-        messageId: payload.id,
+        messageId: payload.data.id,
         response: JSON.stringify(payload),
         rejected: false,
         pending: false,
-      }
+      };
     } catch (error) {
       this.logTransportError('Error sending email confirmation', error);
       throw error;
