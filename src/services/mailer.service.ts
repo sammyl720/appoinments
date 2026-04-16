@@ -1,58 +1,56 @@
-import mailer from 'nodemailer';
-import SMTPTransport from 'nodemailer/lib/smtp-transport';
-import { IMailer, IMessageResult, ITransportConfig, MailMessageInfo } from '../types';
+import { IMailer, IMailerConfig, IMessageResult, MailMessageInfo } from '../types';
 
 export class MailerService implements IMailer {
-  private transport: mailer.Transporter<SMTPTransport.SentMessageInfo>;
-  private readonly transportConfig: ITransportConfig;
+  private readonly mailerConfig: IMailerConfig;
 
-  constructor(transportConfig: ITransportConfig) {
-    this.transportConfig = transportConfig;
-    console.log(
-      `Mail transport config: host=${transportConfig.host}, port=${transportConfig.port}, secure=${transportConfig.secure}, requireTLS=${transportConfig.requireTLS}`,
-    );
-
-    this.transport = mailer.createTransport(transportConfig);
-    const shouldVerifyOnStartup =
-      (process.env.EMAIL_VERIFY_ON_STARTUP ?? "false").toLowerCase() === "true";
-
-    if (shouldVerifyOnStartup) {
-      this.transport.verify().then(() => {
-        console.log('Mail Transport online');
-      }).catch(reason => {
-        this.logTransportError('mailer could not start', reason, transportConfig);
-      });
-    }
+  constructor(mailerConfig: IMailerConfig) {
+    this.mailerConfig = mailerConfig;
+    console.log(`Mail provider config: provider=resend, from=${mailerConfig.fromEmail}`);
   }
 
   async sendEmail(message: MailMessageInfo): Promise<IMessageResult> {
     try {
-      const { messageId, response, accepted, rejected, pending } = await this.transport.sendMail(message);
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.mailerConfig.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: message.from || this.mailerConfig.fromEmail,
+          to: [message.to],
+          subject: message.subject,
+          text: message.text,
+          html: message.html,
+          attachments: message.attachments?.map((attachment) => ({
+            filename: attachment.filename,
+            content: Buffer.from(attachment.content).toString('base64'),
+          })),
+        }),
+      });
+
+      const payload = await response.json() as { id?: string; message?: string; name?: string };
+
+      if (!response.ok || !payload?.id) {
+        throw new Error(payload?.message || payload?.name || `Resend API request failed with status ${response.status}`);
+      }
 
       return {
-        accepted: !!accepted?.length,
-        messageId: messageId,
-        response: response,
-        rejected: !!rejected?.length,
-        pending: !!pending?.length
+        accepted: true,
+        messageId: payload.id,
+        response: JSON.stringify(payload),
+        rejected: false,
+        pending: false,
       }
     } catch (error) {
-      this.logTransportError('Error sending email confirmation', error, this.transportConfig);
+      this.logTransportError('Error sending email confirmation', error);
       throw error;
     }
   }
 
-  private logTransportError(context: string, error: unknown, transportConfig: ITransportConfig) {
+  private logTransportError(context: string, error: unknown) {
     const err = error as { code?: string; message?: string };
     const code = err?.code ?? 'unknown';
-    console.error(
-      `${context} (host=${transportConfig.host}, port=${transportConfig.port}, secure=${transportConfig.secure}, requireTLS=${transportConfig.requireTLS}, code=${code})`,
-    );
-
-    if (code === 'ETIMEDOUT') {
-      console.error(
-        'SMTP connection timed out before reaching the server. This usually means egress SMTP ports are blocked by the hosting provider or firewall rules.',
-      );
-    }
+    console.error(`${context} (provider=resend, code=${code})`);
   }
 }

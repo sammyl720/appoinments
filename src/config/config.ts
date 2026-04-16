@@ -1,4 +1,4 @@
-import { ITransportConfig, Validator } from "../types";
+import { IMailerConfig, Validator } from "../types";
 import dotenv from "dotenv";
 import ValidatorService from "../services/vailidator.service";
 
@@ -27,122 +27,19 @@ export const config = {
   CLIENT_URL,
 };
 
-export const getTransportConfig = (): ITransportConfig => {
-  const DEFAULT_EMAIL_CONNECTION_TIMEOUT_MS = 10_000;
-  const DEFAULT_EMAIL_GREETING_TIMEOUT_MS = 10_000;
-  const DEFAULT_EMAIL_SOCKET_TIMEOUT_MS = 20_000;
+export const getMailerConfig = (): IMailerConfig => {
+  const apiKey = process.env.RESEND_API_KEY;
+  const fromEmail = process.env.EMAIL_FROM ?? process.env.EMAIL;
 
-  const emailHost = process.env.EMAIL_HOST ?? process.env.SMTP_HOST;
-  const emailUser = process.env.EMAIL ?? process.env.SMTP_USER;
-  const emailPassword = process.env.PASSWORD ?? process.env.SMTP_PASS;
-  const emailPort = process.env.EMAIL_PORT ?? process.env.SMTP_PORT;
-  const emailSecure = process.env.EMAIL_SECURE ?? process.env.SMTP_SECURE;
-  const emailRequireTLS = process.env.EMAIL_REQUIRE_TLS ?? process.env.SMTP_REQUIRE_TLS;
-  const emailConnectionTimeout = process.env.EMAIL_CONNECTION_TIMEOUT_MS;
-  const emailGreetingTimeout = process.env.EMAIL_GREETING_TIMEOUT_MS;
-  const emailSocketTimeout = process.env.EMAIL_SOCKET_TIMEOUT_MS;
-
-  if (!emailHost || !emailUser || !emailPassword) {
+  if (!apiKey || !fromEmail) {
     throw new Error(
-      "Email can not be sent!\nPlease make sure the relevant enviroment variable are set",
-    );
-  }
-
-  const normalizeEnvValue = (value?: string) => {
-    if (typeof value !== "string") {
-      return undefined;
-    }
-
-    const normalized = value.trim().replace(/^["']|["']$/g, "");
-    return normalized.length ? normalized : undefined;
-  };
-
-  const parseNumberEnv = (value: string | undefined, fallback: number) => {
-    const normalized = normalizeEnvValue(value);
-    const parsedNumber = Number(normalized);
-    return Number.isFinite(parsedNumber) ? parsedNumber : fallback;
-  };
-
-  const parseOptionalNumberEnv = (value: string | undefined) => {
-    const normalized = normalizeEnvValue(value);
-
-    if (!normalized) {
-      return undefined;
-    }
-
-    const parsedNumber = Number(normalized);
-    return Number.isFinite(parsedNumber) ? parsedNumber : undefined;
-  };
-
-  const parseBooleanEnv = (value: string | undefined) => {
-    const normalizedValue = normalizeEnvValue(value)?.toLowerCase();
-    return normalizedValue === "true";
-  };
-
-  const smtpPort = parseNumberEnv(emailPort, 465);
-  const smtpSecure = emailSecure
-    ? parseBooleanEnv(emailSecure)
-    : smtpPort === 465;
-  const requireTLS = parseBooleanEnv(emailRequireTLS);
-  const parsedConnectionTimeout = parseOptionalNumberEnv(emailConnectionTimeout);
-  const parsedGreetingTimeout = parseOptionalNumberEnv(emailGreetingTimeout);
-  const parsedSocketTimeout = parseOptionalNumberEnv(emailSocketTimeout);
-  const connectionTimeout = parsedConnectionTimeout ?? DEFAULT_EMAIL_CONNECTION_TIMEOUT_MS;
-  const greetingTimeout = parsedGreetingTimeout ?? DEFAULT_EMAIL_GREETING_TIMEOUT_MS;
-  const socketTimeout = parsedSocketTimeout ?? DEFAULT_EMAIL_SOCKET_TIMEOUT_MS;
-
-  if (!emailPort) {
-    console.warn("EMAIL_PORT/SMTP_PORT is not set. Falling back to default SMTP port 465.");
-  }
-
-  if (!emailSecure) {
-    console.warn(
-      "EMAIL_SECURE/SMTP_SECURE is not set. Deriving secure mode from selected port.",
-    );
-  }
-
-  if (emailConnectionTimeout && parsedConnectionTimeout === undefined) {
-    console.warn("EMAIL_CONNECTION_TIMEOUT_MS is invalid and will be ignored.");
-  }
-
-  if (emailGreetingTimeout && parsedGreetingTimeout === undefined) {
-    console.warn("EMAIL_GREETING_TIMEOUT_MS is invalid and will be ignored.");
-  }
-
-  if (emailSocketTimeout && parsedSocketTimeout === undefined) {
-    console.warn("EMAIL_SOCKET_TIMEOUT_MS is invalid and will be ignored.");
-  }
-
-  if (!emailConnectionTimeout) {
-    console.warn(
-      `EMAIL_CONNECTION_TIMEOUT_MS is not set. Using default ${DEFAULT_EMAIL_CONNECTION_TIMEOUT_MS}ms.`,
-    );
-  }
-
-  if (!emailGreetingTimeout) {
-    console.warn(
-      `EMAIL_GREETING_TIMEOUT_MS is not set. Using default ${DEFAULT_EMAIL_GREETING_TIMEOUT_MS}ms.`,
-    );
-  }
-
-  if (!emailSocketTimeout) {
-    console.warn(
-      `EMAIL_SOCKET_TIMEOUT_MS is not set. Using default ${DEFAULT_EMAIL_SOCKET_TIMEOUT_MS}ms.`,
+      "Email can not be sent!\nPlease make sure RESEND_API_KEY and EMAIL_FROM (or EMAIL) are set",
     );
   }
 
   return {
-    host: emailHost,
-    port: smtpPort,
-    secure: smtpSecure,
-    requireTLS,
-    connectionTimeout,
-    greetingTimeout,
-    socketTimeout,
-    auth: {
-      user: emailUser,
-      pass: emailPassword,
-    },
+    apiKey,
+    fromEmail,
   };
 };
 
