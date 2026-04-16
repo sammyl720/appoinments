@@ -4,7 +4,7 @@ import ValidatorService from './services/vailidator.service';
 import express, { ErrorRequestHandler } from 'express';
 import connectToDb from './db/database';
 import cors from 'cors';
-import { config, getTransportConfig } from './config';
+import { config, getMailerConfig } from './config';
 import { TemplateService } from './services/template.service';
 import { MailerService } from './services/mailer.service';
 import getAdminRouter from './routes/admin.route';
@@ -28,7 +28,7 @@ eventDetailsService.addEventListener(appointmentService);
 appointmentService.clearAvailableAppointmentFromCache();
 const templateService = new TemplateService();
 const calGenerator = new EventCalendar();
-const mailerService = new MailerService(getTransportConfig());
+const mailerService = new MailerService(getMailerConfig());
 const authService = new AuthService(new OAuth2Client());
 const emailNotifier = new EmailNotifier();
 

@@ -138,7 +138,7 @@ async function sendConfirmationEmail(appointment: IAppointment, mailer: IMailer,
 
     console.log('Configuring email message...');
     const mailOptions: MailMessageInfo = {
-      from: process.env.EMAIL as string,
+      from: (process.env.EMAIL_FROM ?? process.env.EMAIL) as string,
       to: email,
       subject: 'Blood Drive Appointment',
       text
