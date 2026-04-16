@@ -28,6 +28,10 @@ export const config = {
 };
 
 export const getTransportConfig = (): ITransportConfig => {
+  const DEFAULT_EMAIL_CONNECTION_TIMEOUT_MS = 10_000;
+  const DEFAULT_EMAIL_GREETING_TIMEOUT_MS = 10_000;
+  const DEFAULT_EMAIL_SOCKET_TIMEOUT_MS = 20_000;
+
   const emailHost = process.env.EMAIL_HOST ?? process.env.SMTP_HOST;
   const emailUser = process.env.EMAIL ?? process.env.SMTP_USER;
   const emailPassword = process.env.PASSWORD ?? process.env.SMTP_PASS;
@@ -80,9 +84,12 @@ export const getTransportConfig = (): ITransportConfig => {
     ? parseBooleanEnv(emailSecure)
     : smtpPort === 465;
   const requireTLS = parseBooleanEnv(emailRequireTLS);
-  const connectionTimeout = parseOptionalNumberEnv(emailConnectionTimeout);
-  const greetingTimeout = parseOptionalNumberEnv(emailGreetingTimeout);
-  const socketTimeout = parseOptionalNumberEnv(emailSocketTimeout);
+  const parsedConnectionTimeout = parseOptionalNumberEnv(emailConnectionTimeout);
+  const parsedGreetingTimeout = parseOptionalNumberEnv(emailGreetingTimeout);
+  const parsedSocketTimeout = parseOptionalNumberEnv(emailSocketTimeout);
+  const connectionTimeout = parsedConnectionTimeout ?? DEFAULT_EMAIL_CONNECTION_TIMEOUT_MS;
+  const greetingTimeout = parsedGreetingTimeout ?? DEFAULT_EMAIL_GREETING_TIMEOUT_MS;
+  const socketTimeout = parsedSocketTimeout ?? DEFAULT_EMAIL_SOCKET_TIMEOUT_MS;
 
   if (!emailPort) {
     console.warn("EMAIL_PORT/SMTP_PORT is not set. Falling back to default SMTP port 465.");
@@ -94,16 +101,34 @@ export const getTransportConfig = (): ITransportConfig => {
     );
   }
 
-  if (emailConnectionTimeout && connectionTimeout === undefined) {
+  if (emailConnectionTimeout && parsedConnectionTimeout === undefined) {
     console.warn("EMAIL_CONNECTION_TIMEOUT_MS is invalid and will be ignored.");
   }
 
-  if (emailGreetingTimeout && greetingTimeout === undefined) {
+  if (emailGreetingTimeout && parsedGreetingTimeout === undefined) {
     console.warn("EMAIL_GREETING_TIMEOUT_MS is invalid and will be ignored.");
   }
 
-  if (emailSocketTimeout && socketTimeout === undefined) {
+  if (emailSocketTimeout && parsedSocketTimeout === undefined) {
     console.warn("EMAIL_SOCKET_TIMEOUT_MS is invalid and will be ignored.");
+  }
+
+  if (!emailConnectionTimeout) {
+    console.warn(
+      `EMAIL_CONNECTION_TIMEOUT_MS is not set. Using default ${DEFAULT_EMAIL_CONNECTION_TIMEOUT_MS}ms.`,
+    );
+  }
+
+  if (!emailGreetingTimeout) {
+    console.warn(
+      `EMAIL_GREETING_TIMEOUT_MS is not set. Using default ${DEFAULT_EMAIL_GREETING_TIMEOUT_MS}ms.`,
+    );
+  }
+
+  if (!emailSocketTimeout) {
+    console.warn(
+      `EMAIL_SOCKET_TIMEOUT_MS is not set. Using default ${DEFAULT_EMAIL_SOCKET_TIMEOUT_MS}ms.`,
+    );
   }
 
   return {
